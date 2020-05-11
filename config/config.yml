@@ -8,10 +8,20 @@ genome_lineage_list: genome-lineage-list.txt
 gtdb_datadir: /home/ctbrown/gtdbtk/release89/fastani/database/
 gtdb_protein_datadir: "gtdb_r89_rep_genomes_faa"
 protein_input: True
-translate_dna: True
+translate: True
 sourmash_params:
   encoding:
     dna:
+      ksize:
+        - 21
+        - 31
+        - 51
+      scaled:
+        - 2000
+        - 1000
+        - 200
+        - 1
+    rna:
       ksize:
         - 21
         - 31

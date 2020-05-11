@@ -128,7 +128,7 @@ rule sourmash_compute_rna:
         k= lambda w: w.k,
         scaled= lambda w: w.scaled,
         compute_moltypes= lambda w: moltype_map[w.encoding],
-        input_is_protein=True,
+        input_is_protein=False,
         track_abundance=True,
     threads: 1
     resources:

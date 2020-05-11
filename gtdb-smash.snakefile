@@ -40,7 +40,7 @@ for enc in nucleotide_encodings:
         for encoding in ["protein", "dayhoff", "hp"]:
             # ksizes must be multiplied by 3 (give nucleotide ksizes to sourmash)
             translate_ksizes = [int(k)*3 for k in encoding_info[encoding]["ksize"]]
-            translate_targets+=expand(os.path.join(compute_dir, {enc},"{sample}_{encoding}_scaled{scaled}_k{k}.{ext}"), sample = genome_lineages, encoding=encoding, scaled=encoding_info[encoding]["scaled"], k=translate_ksizes, ext=output_extensions)
+            translate_targets+=expand(os.path.join(compute_dir, f"{enc}","{sample}_{encoding}_scaled{scaled}_k{k}.{ext}"), sample = genome_lineages, encoding=encoding, scaled=encoding_info[encoding]["scaled"], k=translate_ksizes, ext=output_extensions)
 
 if protein_input:
     for encoding in ["protein", "dayhoff", "hp"]:

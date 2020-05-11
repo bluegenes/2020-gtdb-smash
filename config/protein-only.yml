@@ -7,6 +7,7 @@ genome_lineage_list: genome-lineage-list.txt
 # local gtdb database
 gtdb_datadir: /home/ctbrown/gtdbtk/release89/fastani/database/
 gtdb_protein_datadir: "gtdb_r89_rep_genomes_faa"
+gtdb_rna_datadir: "gtdb_r89_rep_genomes_protein_fna"
 protein_input: True
 genome_sigs: False
 rna_sigs: True

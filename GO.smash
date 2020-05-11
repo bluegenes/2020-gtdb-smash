@@ -1,0 +1,4 @@
+# snakemake -s gtdb-smash.snakefile --configfiles config/config.yml --profile default --nolock
+
+snakemake -s gtdb-smash.snakefile --configfiles config/protein-only.yml --profile default --nolock 
+

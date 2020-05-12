@@ -46,8 +46,11 @@ alphabets_to_run = config["sencha_params"]["alphabet"] # dictionary of alphabets
 # build output files based on config
 sencha_targets=[]
 for alpha, alpha_info in alphabets_to_run.items():
-    #sencha_targets+=expand(os.path.join(translate_dir, "{sample}_{alphabet}_k{k}_ref{refname}_jacc{thresh}.{ext}"), sample=list(sampleDF.index), alphabet=alpha, k=alpha_info["ksizes"], refname=refnames, ext=sencha_extensions, thresh=alpha_info["jaccard_threshold"])
+    sencha_targets+=expand(os.path.join(translate_dir, "{sample}_{alphabet}_k{k}_ref{refname}_jacc{thresh}.{ext}"), sample=genome_lineages, alphabet=alpha, k=alpha_info["ksizes"], refname=refnames, ext=sencha_extensions, thresh=alpha_info["jaccard_threshold"])
     sencha_targets+=expand(os.path.join(index_dir, "ref{refname}_{alphabet}_k{k}.index"), refname=refnames, alphabet=alpha, k=alpha_info["ksizes"])
+    if config.get("sencha_sigs", False):
+        for encoding in ["protein", "dayhoff", "hp"]:
+            sencha_targets+=expand(os.path.join(compute_dir, "sencha_translated", "{sample}_{alphabet}_k{ksize}_ref{refname}_jacc{thresh}.sourmash_{encoding}_scaled{scaled}_pk{sourmash_k}.{ext}"), sample=genome_lineages, alphabet=alpha, ksize=alpha_info["ksizes"], refname=refnames, thresh=alpha_info["jaccard_threshold"], encoding=encoding, scaled=encoding_info[encoding]["scaled"],sourmash_k=encoding_info[encoding]["ksize"], ext=output_extensions)
 ## build sourmash targets
 nucleotide_encodings = [] 
 if config.get("genome_sigs", True):
@@ -165,32 +168,61 @@ rule sencha_index_from_peptide_dir:
         sencha index --alphabet {params.alphabet} --peptide-ksize {wildcards.ksize} --tablesize {wildcards.tablesize} --save-as {output} --index-from-dir {params.index_dir} 2> {log}
         """
 
-#rule sencha_translate:
-#    input:
-#        fastq=lambda w: sampleDF.loc[w.sample, "read1"],
-#        index= rules.sencha_index.output
-#    output:
-#        coding_prot=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.codingpep.fa"),
-#        coding_nucl=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.codingnucl.fa"),
-#        noncoding_nucl=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.noncoding.fa"),
-#        low_complexity_prot=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.lowcomplexprot.fa"),
-#        low_complexity_nucl=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.lowcomplexnucl.fa"),
-#        csv=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.csv"),
-#        json=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.json"),
-#    log: os.path.join(logs_dir, "sencha_translate", "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.translate.log") #2>{log} err ("missing PEPTIDES file")
-#    benchmark: os.path.join(logs_dir, "sencha_translate", "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.translate.benchmark")
-#    params:
-#        alphabet=lambda w: alpha_abbreviations[w.alphabet],
-#    threads: 1
-#    resources:
-#        mem_mb=lambda wildcards, attempt: attempt *40000, #40GB*attempt
-#        #mem_mb=50000,
-#        runtime=6000
-#        # subsampled files:
-#        #mem_mb=lambda wildcards, attempt: attempt *10000,
-#        #mem_mb=lambda wildcards, attempt: attempt *4000,
-#        #runtime=60
-#    wildcard_constraints:
-#        ref="\w+",
-#        alphabet="\w+",
-#        ksize="\d+",
+rule sencha_translate:
+    input:
+        fastq=find_corresponding_rna_file,
+        index=rules.sencha_index_from_peptide_dir.output
+    output:
+        coding_prot=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.codingpep.fa"),
+        coding_nucl=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.codingnucl.fa"),
+        noncoding_nucl=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.noncoding.fa"),
+        low_complexity_prot=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.lowcomplexprot.fa"),
+        low_complexity_nucl=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.lowcomplexnucl.fa"),
+        csv=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.csv"),
+        json=os.path.join(translate_dir, "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.json"),
+    log: os.path.join(logs_dir, "sencha_translate", "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.translate.log") #2>{log} err ("missing PEPTIDES file")
+    benchmark: os.path.join(logs_dir, "sencha_translate", "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.translate.benchmark")
+    params:
+        alphabet=lambda w: alpha_abbreviations[w.alphabet],
+    threads: 1
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt *10000, #10GB*attempt
+        #mem_mb=50000,
+        runtime=600,
+        # subsampled files:
+        #mem_mb=lambda wildcards, attempt: attempt *10000,
+        #mem_mb=lambda wildcards, attempt: attempt *4000,
+        #runtime=60
+    wildcard_constraints:
+        ref="\w+",
+        alphabet="\w+",
+        ksize="\d+",
+        jaccard_thresh="\d\.\d*",
+    conda: os.path.join(envs_dir, "sencha-env.yml")
+    shell:
+        """
+        sencha translate --verbose --peptides-are-bloom-filter --alphabet {params.alphabet} --peptide-ksize {wildcards.ksize} --jaccard-threshold {wildcards.jaccard_thresh} --noncoding-nucleotide-fasta {output.noncoding_nucl} --low-complexity-nucleotide-fasta {output.low_complexity_nucl} --coding-nucleotide-fasta {output.coding_nucl} --low-complexity-peptide-fasta {output.low_complexity_prot} --csv {output.csv} --json- summary {output.json} {input.index} {input.fastq} > {output.coding_prot} 2> {log}
+        """
+rule sourmash_compute_sencha_translated:
+    input: rules.sencha_translate.output.coding_prot
+    output: os.path.join(compute_dir, "sencha_translated", "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.sourmash_{encoding}_scaled{scaled}_pk{k}.sig")
+    params:
+        k= lambda w: w.k,
+        scaled= lambda w: w.scaled,
+        compute_moltypes= lambda w: w.encoding,
+        input_is_protein=True,
+        track_abundance=True,
+    threads: 1
+    resources:
+        #mem_mb=3000,
+        mem_mb=lambda wildcards, attempt: attempt *3000,
+        runtime=200,
+    wildcard_constraints:
+        ref="\w+",
+        alphabet="\w+",
+        ksize="\d+",
+        jaccard_thresh="\d\.\d*",
+    log: os.path.join(logs_dir, "sourmash", "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.sourmash_{encoding}_scaled{scaled}_pk{k}.compute.log")
+    benchmark: os.path.join(logs_dir, "sourmash", "{sample}_{alphabet}_k{ksize}_ref{ref}_t{tablesize}_jacc{jaccard_thresh}.sourmash_{encoding}_scaled{scaled}_pk{k}.compute.log")
+    conda: "envs/sourmash3.3.yml"
+    script: "scripts/sourmash-compute.wrapper.py"

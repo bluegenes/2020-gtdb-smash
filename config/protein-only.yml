@@ -10,57 +10,46 @@ gtdb_protein_datadir: "gtdb_r89_rep_genomes_faa"
 gtdb_rna_datadir: "gtdb_r89_rep_genomes_protein_fna"
 protein_input: True
 genome_sigs: False
-rna_sigs: True
+rna_sigs: False
 translate: True
 sourmash_params:
   encoding:
     dna:
-      ksize:
-        - 21
-        - 31
-        - 51
-      scaled:
-        - 2000
-        - 1000
-       # - 200
-       # - 1
+      ksize: [21,31,51]
+      scaled: [2000, 1000, 500]
     rna:
-      ksize:
-        - 21
-        - 31
-        - 51
-      scaled:
-        - 2000
-        - 1000
-       # - 500
-        - 1
+      ksize: [21,31,51]
+      scaled: [2000, 1000, 500] 
     protein:
-      ksize:
-        - 5
-        - 7
-        - 9
-        - 11
-      scaled:
-      #  - 1000
-       #- 200
-        - 1
-    dayhoff:
-      ksize:
-        - 9
-        - 11
-        - 13
-        - 15
-      scaled:
-       # - 500
-       # - 200
-        - 1
+      ksize: [5,7,9,11]
+      scaled: [1] #200?
+    dayhoff: 
+      ksize: [9,11,13,15] 
+      scaled: [1] #200?
     hp:
-      ksize:
-        - 15
-        - 17
-        - 19
-        - 21
-      scaled:
-        #- 500
-        #- 200
-        - 1
+      ksize: [15,17,19,21]
+      scaled: [1] #200?
+sencha_params:
+  peptide_references:
+    gtdb_r89:
+      path: "/home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa"
+      tablesize: 1e10
+      index_memory: 60000
+    sprot:
+      path: /home/ntpierce/2020-pep/khtools_testing/uniprot_sprot.fasta.gz
+      tablesize: 1e9
+      index_memory: 20000
+    #merc:
+    #  path: /home/ntpierce/2020-pep/khtools_testing/MERC.fasta.gz
+    #  tablesize: 1e10
+    #  index_memory: 60000
+  alphabet:
+    protein:
+      ksizes: [7]#[5,7,9,11]
+      jaccard_threshold: [0.5]
+    dayhoff:
+      ksizes: [11] #[9,11,13,15]
+      jaccard_threshold: [0.5]
+    hp:
+      ksizes: [15] #[15,17,19,21]
+      jaccard_threshold: [0.8]

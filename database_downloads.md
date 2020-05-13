@@ -1,13 +1,11 @@
 Database Info
 ===
 
-## GTDB
+## GTDB Protein
 
 [Release 89](https://data.ace.uq.edu.au/public/gtdb/data/releases/release89/89.0/)
 
 [FILE DESCRIPTIONS](https://data.ace.uq.edu.au/public/gtdb/data/releases/release89/89.0/FILE_DESCRIPTIONS)
-
-### gtdb proteins
 
    
   -  Amino Acid seqs:  [gtdb_r89_rep_genomes.protein.faa.tar.gz](https://data.ace.uq.edu.au/public/gtdb/data/releases/release89/89.0/gtdb_r89_rep_genomes.faa.tar.gz) 

@@ -23,10 +23,10 @@ sourmash_params:
       scaled: [2000] #[2000, 1000, 500] 
     protein:
       ksize: [7] #[5,7,9,11]
-      scaled: [1] #200?
+      scaled: [1, 200] #200?
     dayhoff: 
       ksize: [13] # [9,11,13,15] 
-      scaled: [1] #200?
+      scaled: [1, 200] #200?
     hp:
       ksize:  [17] #[15,17,19,21]
-      scaled: [1] #200?
+      scaled: [1, 200] #200?

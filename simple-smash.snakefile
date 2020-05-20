@@ -51,15 +51,15 @@ def build_filename(folder, sample, encoding, scaled, ksize):
 
 for enc in nucleotide_encodings:
     nucleotide_targets += expand(os.path.join(compute_dir, "{encoding}", "{sample}_{encoding}_scaled{scaled}_k{k}.{ext}"), sample = genome_lineages, encoding=enc, scaled=encoding_info[enc]["scaled"], k=encoding_info[enc]["ksize"], ext=output_extensions)
-    nucleotide_targets += expand(os.path.join(plots_dir, f"{enc}", "path{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf"), encoding=enc, scaled=encoding_info[enc]["scaled"], k=encoding_info[enc]["ksize"], path = path2acc.keys())
+    nucleotide_targets += expand(os.path.join(plots_dir, f"{enc}", "{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf"), encoding=enc, scaled=encoding_info[enc]["scaled"], k=encoding_info[enc]["ksize"], path = path2acc.keys())
     if translate: # just for kicks, translating dna seqs too
         for encoding in ["protein", "dayhoff", "hp"]:
             translate_targets+=expand(os.path.join(compute_dir, f"{enc}","{sample}_{encoding}_scaled{scaled}_k{k}.{ext}"), sample = genome_lineages, encoding=encoding, scaled=encoding_info[encoding]["scaled"], k=encoding_info[encoding]["ksize"], ext=output_extensions)
-            translate_targets+= expand(os.path.join(plots_dir, f"{enc}", "path{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf"), encoding=encoding, scaled=encoding_info[encoding]["scaled"],k=encoding_info[encoding]["ksize"], path = path2acc.keys())
+            translate_targets+= expand(os.path.join(plots_dir, f"{enc}", "{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf"), encoding=encoding, scaled=encoding_info[encoding]["scaled"],k=encoding_info[encoding]["ksize"], path = path2acc.keys())
 if protein_input:
     for encoding in ["protein", "dayhoff", "hp"]:
         protein_targets+=expand(os.path.join(compute_dir,"protein","{sample}_{encoding}_scaled{scaled}_k{k}.{ext}"), sample = genome_lineages, encoding=encoding, scaled=encoding_info[encoding]["scaled"],k=encoding_info[encoding]["ksize"], ext=output_extensions)
-        protein_targets+= expand(os.path.join(plots_dir, "protein", "path{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf"), encoding=encoding, scaled=encoding_info[encoding]["scaled"],k=encoding_info[encoding]["ksize"], path = path2acc.keys())
+        protein_targets+= expand(os.path.join(plots_dir, "protein", "{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf"), encoding=encoding, scaled=encoding_info[encoding]["scaled"],k=encoding_info[encoding]["ksize"], path = path2acc.keys())
 
 output_targets = nucleotide_targets + protein_targets + translate_targets
 
@@ -104,7 +104,7 @@ rule sourmash_compute_protein:
     resources:
         #mem_mb=3000,
         mem_mb=lambda wildcards, attempt: attempt *3000,
-        runtime=600,
+        runtime=1200,
     log: os.path.join(logs_dir, "sourmash", "{sample}_{encoding}_scaled{scaled}_k{k}.protein.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{sample}_{encoding}_scaled{scaled}_k{k}.protein.compute.benchmark")
     conda: "envs/sourmash3.3.yml"
@@ -117,7 +117,6 @@ def find_corresponding_rna_file(w):
 moltype_map = {"rna": "dna", "dna": "dna", "protein":"protein", "dayhoff": "dayhoff", "hp":"hp"}
 # now passing in the protein ksize. multipy by 3 if necessary before calculating signature
 ksize_multiplier = {"rna": 1, "dna": 1, "protein": 3, "dayhoff": 3, "hp":3}  
-
 
 rule sourmash_compute_rna:
     input: find_corresponding_rna_file 
@@ -132,7 +131,7 @@ rule sourmash_compute_rna:
     resources:
         #mem_mb=3000,
         mem_mb=lambda wildcards, attempt: attempt *3000,
-        runtime=600,
+        runtime=1200,
     log: os.path.join(logs_dir, "sourmash", "{sample}_{encoding}_scaled{scaled}_k{k}.rna.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{sample}_{encoding}_scaled{scaled}_k{k}.rna.compute.benchmark")
     conda: "envs/sourmash3.3.yml"
@@ -148,8 +147,12 @@ def aggregate_sigs(w):
 rule sourmash_compare:
     input: sigs=aggregate_sigs
     output:
-        np=os.path.join(compare_dir, "{moltype}", "path{path}_{encoding}_scaled{scaled}_k{k}_compare.np"),
-        csv=os.path.join(compare_dir, "{moltype}", "path{path}_{encoding}_scaled{scaled}_k{k}_compare.csv"),
+        np=os.path.join(compare_dir, "{moltype}", "{path}_{encoding}_scaled{scaled}_k{k}_compare.np"),
+        csv=os.path.join(compare_dir, "{moltype}", "{path}_{encoding}_scaled{scaled}_k{k}_compare.csv"),
+    threads:1
+    resources:
+        mem_mb=2000,
+        runtime=120,
     params:
         include_encodings = lambda w: f"{w.encoding}",
         exclude_encodings = ["nucl", "protein", "dayhoff", "hp"], # this will excude everything except for included encoding
@@ -158,11 +161,13 @@ rule sourmash_compare:
     script: "scripts/sourmash-compare.wrapper.py"
 
 # sourmash plot each compare matrix numpy output
+localrules: sourmash_plot
+
 rule sourmash_plot:
-    input: os.path.join(compare_dir, "{moltype}", "path{path}_{encoding}_scaled{scaled}_k{k}_compare.np")
-    output: os.path.join(plots_dir, "{moltype}", "path{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf")
+    input: os.path.join(compare_dir, "{moltype}", "{path}_{encoding}_scaled{scaled}_k{k}_compare.np")
+    output: os.path.join(plots_dir, "{moltype}", "{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf")
     params:
-        plot_dir=plots_dir,
+        plot_dir=lambda w: os.path.join(plots_dir, w.moltype)
     conda: "envs/sourmash3.3.yml"
     shell:
         """

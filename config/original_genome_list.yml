@@ -4,6 +4,7 @@ output_dir: gtdb_pepsmash
 # lineages to explore
 lineage_csv: gtdb-lineages.csv
 genome_lineage_list: genome-lineage-list.txt
+samples_csv: gtdb_evol_groups.tsv
 # local gtdb database
 gtdb_datadir: /home/ctbrown/gtdbtk/release89/fastani/database/
 gtdb_protein_datadir: "gtdb_r89_rep_genomes_faa"
@@ -11,45 +12,46 @@ gtdb_rna_datadir: "gtdb_r89_rep_genomes_protein_fna"
 protein_input: True
 genome_sigs: False
 rna_sigs: False
-translate: True
+translate: False
+sencha_sigs: False
 sourmash_params:
   encoding:
     dna:
-      ksize: [21,31,51]
-      scaled: [2000, 1000, 500]
+      ksize:  [31] #[21,31,51]
+      scaled: [2000] #[2000, 1000, 500]
     rna:
-      ksize: [21,31,51]
-      scaled: [2000, 1000, 500] 
+      ksize: [31] #[21,31,51]
+      scaled: [2000] #[2000, 1000, 500] 
     protein:
-      ksize: [5,7,9,11]
+      ksize: [7] #[5,7,9,11]
       scaled: [1] #200?
     dayhoff: 
-      ksize: [9,11,13,15] 
+      ksize: [13] # [9,11,13,15] 
       scaled: [1] #200?
     hp:
-      ksize: [15,17,19,21]
+      ksize:  [17] #[15,17,19,21]
       scaled: [1] #200?
 sencha_params:
   peptide_references:
     gtdb_r89:
       path: "/home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa"
-      tablesize: 1e10
-      index_memory: 60000
+      tablesize: 1e10 #1e9
+      index_memory: 15000
     sprot:
       path: /home/ntpierce/2020-pep/khtools_testing/uniprot_sprot.fasta.gz
       tablesize: 1e9
-      index_memory: 20000
+      index_memory: 5000
     #merc:
     #  path: /home/ntpierce/2020-pep/khtools_testing/MERC.fasta.gz
     #  tablesize: 1e10
     #  index_memory: 60000
   alphabet:
     protein:
-      ksizes: [7]#[5,7,9,11]
+      ksizes: [7] #[5,7,9,11]
       jaccard_threshold: [0.5]
     dayhoff:
-      ksizes: [11] #[9,11,13,15]
+      ksizes: [13] #[9,11,13,15]
       jaccard_threshold: [0.5]
     hp:
-      ksizes: [15] #[15,17,19,21]
+      ksizes: [17] #[15,17,19,21]
       jaccard_threshold: [0.8]

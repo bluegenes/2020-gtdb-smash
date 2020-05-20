@@ -1,0 +1,22 @@
+accession	path	rank	lineage
+GCF_000744455	path1	superkingdom	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__B26-1;g__B26-1;s__B26-1 sp001593925
+GCA_002254895	path1	phylum	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__B26-1;g__B26-1;s__B26-1 sp001593925
+GCA_001774245	path1	class	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__B26-1;g__B26-1;s__B26-1 sp001593925
+GCA_002507245	path1	order	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__B26-1;g__B26-1;s__B26-1 sp001593925
+GCA_001593845	path1	family	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__B26-1;g__B26-1;s__B26-1 sp001593925
+GCA_001593935	path1	genus	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__B26-1;g__B26-1;s__B26-1 sp001593925
+GCA_001593925	path1	species	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__B26-1;g__B26-1;s__B26-1 sp001593925
+GCF_000744455	path2	superkingdom	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__UBA233;g__UBA233;s__UBA233 sp002507245
+GCA_002254895	path2	phylum	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__UBA233;g__UBA233;s__UBA233 sp002507245
+GCA_001774245	path2	class	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__UBA233;g__UBA233;s__UBA233 sp002507245
+GCA_001593845	path2	order	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__UBA233;g__UBA233;s__UBA233 sp002507245
+GCA_003164295	path2	family	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__UBA233;g__UBA233;s__UBA233 sp002507245
+GCA_002010925	path2	genus	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__UBA233;g__UBA233;s__UBA233 sp002507245
+GCA_002507245	path2	species	d__Archaea;p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__UBA233;g__UBA233;s__UBA233 sp002507245
+GCF_000744455	path3	superkingdom	d__Archaea;p__Crenarchaeota;c__Nitrososphaeria;o__Nitrososphaerales;f__Nitrosopumilaceae;g__Nitrosoarchaeum;s__Nitrosoarchaeum limnia
+GCA_002254895	path3	phylum	d__Archaea;p__Crenarchaeota;c__Nitrososphaeria;o__Nitrososphaerales;f__Nitrosopumilaceae;g__Nitrosoarchaeum;s__Nitrosoarchaeum limnia
+GCA_000270325	path3	class	d__Archaea;p__Crenarchaeota;c__Nitrososphaeria;o__Nitrososphaerales;f__Nitrosopumilaceae;g__Nitrosoarchaeum;s__Nitrosoarchaeum limnia
+GCA_003135575	path3	order	d__Archaea;p__Crenarchaeota;c__Nitrososphaeria;o__Nitrososphaerales;f__Nitrosopumilaceae;g__Nitrosoarchaeum;s__Nitrosoarchaeum limnia
+GCA_000746685	path3	family	d__Archaea;p__Crenarchaeota;c__Nitrososphaeria;o__Nitrososphaerales;f__Nitrosopumilaceae;g__Nitrosoarchaeum;s__Nitrosoarchaeum limnia
+GCF_000220175	path3	genus	d__Archaea;p__Crenarchaeota;c__Nitrososphaeria;o__Nitrososphaerales;f__Nitrosopumilaceae;g__Nitrosoarchaeum;s__Nitrosoarchaeum limnia
+GCA_000204585	path3	species	d__Archaea;p__Crenarchaeota;c__Nitrososphaeria;o__Nitrososphaerales;f__Nitrosopumilaceae;g__Nitrosoarchaeum;s__Nitrosoarchaeum limnia

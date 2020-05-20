@@ -3,7 +3,8 @@ output_dir: gtdb_pepsmash
 
 # lineages to explore
 lineage_csv: gtdb-lineages.csv
-genome_lineage_list: genome-lineage-list.txt
+#genome_lineage_list: genome-lineage-list.txt
+samples_csv: gtdb_evol_groups.tsv
 # local gtdb database
 gtdb_datadir: /home/ctbrown/gtdbtk/release89/fastani/database/
 gtdb_protein_datadir: "gtdb_r89_rep_genomes_faa"

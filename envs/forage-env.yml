@@ -1,0 +1,8 @@
+name: forage-env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - sourmash==3.3
+  - pandas==1.0.3

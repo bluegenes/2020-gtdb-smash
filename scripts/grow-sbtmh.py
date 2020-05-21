@@ -78,8 +78,10 @@ def grow_sbt(input_files, sbt_file, ksize, scaled, alpha, abund, input_is_direct
         sys.stderr.write(f"{inp}\n")
         sig = load_or_generate_sig(inp, ksize, scaled, alpha, abund)
         if sig:
-            leaf = SigLeaf(sig.md5sum(), sig)
-            sbt.add_node(leaf)
+            # protein and hp were exiting with ValueError: This will insert duplicated entries .. maybe checking for empty mins will solve?
+            if len(sig.minhash.get_mins()) > 0:
+                leaf = SigLeaf(sig.md5sum(), sig)
+                sbt.add_node(leaf)
     # save the tree
     # hmm.. overwriting seems complicated but managed? see sourmash/sbt_storage.py
     sbt.save(sbt_file)

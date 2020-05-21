@@ -1,0 +1,20 @@
+index_dir: "gtdb_sbts"
+
+references:
+    gtdb_faa:
+      path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+      #index_memory: 20000
+      alphabet:
+        protein:
+          ksizes: [7,9,11] #[5,7,9,11]
+          scaled: [1]
+        #dayhoff:
+        #  ksizes: [11,12,13,15] #[9,11,13,15]
+        #  scaled: [1]
+        #hp:
+        #  ksizes: [15,17,19] #,21,23,25] #[15,17,19,21]
+        #  scaled: [1]
+    #gtdb_r89_fna:
+    #  path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_protein_fna
+    #gtdb_r89_dna:
+    #  path: /home/ctbrown/gtdbtk/release89/fastani/database

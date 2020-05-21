@@ -30,7 +30,7 @@ rule grow_sbt_from_fasta:
     benchmark: os.path.join(logs_dir, "{db_name}_{alphabet}_{scaled}_{ksize}.grow_sbt.benchmark")
     threads: 1
     resources:
-        mem_mb = lambda wildcards, attempt: attempt *20000,
+        mem_mb = lambda wildcards, attempt: attempt *5000,
         runtime = 6000,
     conda: "envs/sourmash3.3.yml"
     shell:

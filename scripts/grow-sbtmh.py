@@ -36,7 +36,7 @@ def maybe_load_sbt_file(tree_file):
 
 def determine_appropriate_fresh_minhash(ksize, scaled_val, abund, alphabet):
     if alphabet == "dna":
-        mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled_val, track_abundance=abund, dna=True)
+        mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled_val, track_abundance=abund, is_protein=False)
     elif alphabet == "protein":
         mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled_val, track_abundance=abund, is_protein=True, dayhoff=False, hp=False)
     elif alphabet == "dayhoff":

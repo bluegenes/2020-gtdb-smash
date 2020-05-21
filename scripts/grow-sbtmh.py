@@ -34,7 +34,6 @@ def maybe_load_sbt_file(tree_file):
     return sbt
 
 
-#if translating, is_protein should be False
 def determine_appropriate_fresh_minhash(ksize, scaled_val, abund, alphabet):
     if alphabet == "dna":
         mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled_val, track_abundance=abund, dna=True)
@@ -78,13 +77,11 @@ def grow_sbt(input_files, sbt_file, ksize, scaled, alpha, abund, input_is_direct
     for inp in input_files:
         sys.stderr.write(f"{inp}\n")
         sig = load_or_generate_sig(inp, ksize, scaled, alpha, abund)
-        ## can we check that the sig is not empty here? don't want to add empty sigs
-        # add to sbt
         if sig:
             leaf = SigLeaf(sig.md5sum(), sig)
             sbt.add_node(leaf)
     # save the tree
-    # hmm.. is overwriting desirable here? and/or will overwriting cause any issues?
+    # hmm.. overwriting seems complicated but managed? see sourmash/sbt_storage.py
     sbt.save(sbt_file)
 
 

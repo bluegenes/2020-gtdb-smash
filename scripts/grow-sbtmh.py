@@ -74,9 +74,9 @@ def grow_sbt(input_files, sbt_file, ksize, scaled, alpha, abund, input_is_direct
         input_files = [os.path.join(refdir, f) for f in os.listdir(refdir)]
     # create or load sbt
     sbt = maybe_load_sbt_file(sbt_file)
-    import pdb;pdb.set_trace()
     # iterate through input files; add to sbt
     for inp in input_files:
+        sys.stderr.write(f"{inp}\n")
         sig = load_or_generate_sig(inp, ksize, scaled, alpha, abund)
         ## can we check that the sig is not empty here? don't want to add empty sigs
         # add to sbt
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     p.add_argument("--ksize", type=int, default=31)
     p.add_argument("--scaled", type=int, default=1000)
     p.add_argument("--alphabet", default="dna")
-    P.add_argument("--input-is-directory", action=store_true)
-    p.add_argument("--track-abundance", action='store_true')
+    p.add_argument("--input-is-directory", action="store_true")
+    p.add_argument("--track-abundance", action="store_true")
     args = p.parse_args()
     sys.exit(grow_sbt(args.input_files, args.sbt, args.ksize, args.scaled, args.alphabet, args.track_abundance, args.input_is_directory))

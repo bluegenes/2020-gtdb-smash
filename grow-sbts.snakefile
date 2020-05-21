@@ -35,6 +35,6 @@ rule grow_sbt_from_fasta:
     conda: "envs/sourmash3.3.yml"
     shell:
         """
-        python scripts/grow-sbtmh.py {input} --alphabet {wildcards.alphabet} --ksize {wildcards.ksize} --scaled {wildcards.scaled} --sbt {output} --track-abundance --input-is-directory
+        python scripts/grow-sbtmh.py {input} --alphabet {wildcards.alphabet} --ksize {wildcards.ksize} --scaled {wildcards.scaled} --sbt {output} --track-abundance --input-is-directory 2> {log}
         """
 

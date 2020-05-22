@@ -48,16 +48,33 @@ def sourmash_compare_and_plot(siglist, ignore_abundance=False, plot_and_save=Fal
 
 
 def assess_group_distance(groupD, acc2sig, abund=False): # provide options for choosing to use abund or not? (compute either one OR both, as is done now)
-    for group, acclist in groupD.items():
-        siglist = [acc2sig[acc] for acc in acclist] # get signatures
+    speciesDist = {}
+    for group, accInfo in groupD.items(): # acclist is a dict with accessions as keys, rank as values (acc: "species)"
+        siglist = [acc2sig[acc] for acc in accInfo.keys()] # get signatures
         jaccard_dist, labels=sourmash_compare_and_plot(siglist, ignore_abundance=False) #, filename= f"{group}_jaccard.svg") # need ksize, scaled, etc. can we pass in a base name, then add group name?
-
-        ## TO DO ##
-        # build distance:: steps_to_common_ancestor!
-        # use groupDF ("species", "genus", etc info)
-
         if abund:
             cosine_dist, labels=sourmash_compare_and_plot(siglist, ignore_abundance=True)  #, filename= f"{group}_cosine.svg")
+        # build distance:: steps_to_common_ancestor!
+        # all we care about is the distance from species-level? so every pairwise with that genome.
+        # find the accession that is the species entry
+        # grab column (or row) from np matrix / dataframe
+        for acc, rank in accInfo.items():
+            if rank == "species":
+                species_index= labels.index(acc)
+                jaccard_from_species = jaccard_dist[species_index, :]
+                # right now, dict. Better to add it to the pandas DF? not going to get overly large for my purposes...
+                speciesDist[group] = jaccard_from_species
+                break
+    return speciesDist
+
+
+def plot_all_distances(speciesDist):
+    # given all the distances generated from each path, boxplot the distances!
+    # groupDF['steps_to_common_ancestor'] = groupDF["rank"].map(steps_to_common_ancestor)
+    # steps_to_common_ancestor = {"species": 0, "genus": 1, "family": 2, "order": 3, "class": 4, "phylum": 5, "superkingdom": 6}
+
+    pass
+
 
 
 def csv_reader(groups_file):
@@ -121,7 +138,8 @@ def build_group_to_accession(group_infofile, db_infofile=None):
         groupDF = match_sbt_accession(groupDF, db_infofile, updated_groupInfofile)
 
     # build group: accession dictionary
-    group2acc = groupDF.groupby('path').agg({'sbt_accession':lambda x: list(x)}).to_dict()["sbt_accession"]
+    #group2acc = groupDF.groupby('path').agg({'sbt_accession':lambda x: list(x)}).to_dict()["sbt_accession"]
+    group2acc = (groupDF.groupby('path').apply(lambda x: dict(zip(x['sbt_accession'],x['rank']))).to_dict())
     # build set of unique query accessions
     acc_set = set(groupDF["sbt_accession"].unique())
     return group2acc, acc_set
@@ -131,8 +149,8 @@ def main(args):
     sbt = load_sbt_file(args.sbt)
     query_accessionD, all_acc = build_group_to_accession(args.query_csv, args.database_csv)
     accession2sig = forage_by_name(sbt, all_acc, args.threshold)
-    assess_group_distance(query_accessionD, accession2sig)
-
+    dist_from_species_level = assess_group_distance(query_accessionD, accession2sig)
+    plot_all_distances(dist_from_species_level)
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()

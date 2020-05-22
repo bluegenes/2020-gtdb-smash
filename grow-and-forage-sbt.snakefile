@@ -44,7 +44,10 @@ for sample, info in sampleInfo.items():
         for alpha, alphainfo in info["alphabet"].items():
             sbt_targets+=expand(os.path.join(index_dir,"{sample}_{alphabet}_scaled{scaled}_k{k}.{ext}"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"], ext=sbt_extensions)
     for alpha, alphainfo in info["alphabet"].items():
-        query_targets=expand(os.path.join(dist_dir, "{sample}_{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.csv"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+        query_targets+=expand(os.path.join(dist_dir, "{sample}_{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.csv"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+
+print(sbt_targets)
+print(query_targets)
 
 rule all:
     input: sbt_targets + query_targets

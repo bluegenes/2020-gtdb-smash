@@ -12,7 +12,8 @@ foraging_samples:
     query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
     grow_sbt:
     # these args == generate sbt
-      input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+      #input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+      input_path: /home/ntpierce/2020-gtdb-smash/gtdb_faa_pathsonly
       subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
       sbt_outdir: "gtdb_sbts"
     # alternatively: use a prebuilt sbt, don't generate new one

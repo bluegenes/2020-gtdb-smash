@@ -46,9 +46,6 @@ for sample, info in sampleInfo.items():
     for alpha, alphainfo in info["alphabet"].items():
         query_targets+=expand(os.path.join(dist_dir, "{sample}_{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.csv"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
 
-print(sbt_targets)
-print(query_targets)
-
 rule all:
     input: sbt_targets + query_targets
 
@@ -83,7 +80,7 @@ rule grow_sbt:
     conda: "envs/forage-env.yml"
     shell:
         """
-        python scripts/grow-sbtmh.py {params.input_dir} --input-is-directory --sbt {output.sbt} --ksize {wildcards.k} --scaled {wildcards.scaled} --alphabet {wildcards.alphabet} --track-abundance --subset-csv {params.subset_csv} 2> {log}
+        python scripts/grow-sbtmh.py {params.input_dir} --input-is-directory --sbt {output.sbt} --ksize {wildcards.k} --scaled {wildcards.scaled} --alphabet {wildcards.alphabet} --track-abundance --subset-csv {params.subset_csv} --force-new 2> {log}
         """
 
 def find_forage_inputs(w):
@@ -113,6 +110,6 @@ rule calculate_jaccard_from_common_ancestor:
     conda: "envs/forage-env.yml"
     shell:
         """
-        python scripts/forage-sbt.py {input.sbt} --query_csv {input.query_csv} --distance_from_species_csv {output.csv} --distance_from_species_plot {output.boxplot} 2>{log} 
+        python scripts/forage-sbt.py {input.sbt} --database_csv {input.database_csv}  --query_csv {input.query_csv} --distance_from_species_csv {output.csv} --distance_from_species_plot {output.boxplot} 2>{log}
         """
 

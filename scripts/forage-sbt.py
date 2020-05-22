@@ -23,10 +23,20 @@ def load_sbt_file(tree_file):
             sys.exit()
 
 
-def forage_by_name(sbt, query_accessions, threshold=0.1):
+def forage_by_name(sbt, query_accessions, threshold=0.1, duplicates_csv):
     acc2sig = {}
     num_accs= len(query_accessions)
     num_sigs=0
+    # handle duplicates that don't get added to sbt (temporary. see: https://github.com/dib-lab/sourmash/pull/994)
+    if duplicates_csv:
+        # test this
+        dupes = pd.read_csv(duplicates_csv).to_dict()
+        for acc in query_accessions:
+            if acc in dupes.keys()
+                query_accessions.remove(acc)
+                #filename = dupes["acc"]
+                #does the sbt store this info?
+                #acc2sig[acc] = load_or_generate_sig(filename, ksize, scaled, alpha, abund)
     for sig in sbt.signatures(): # generator with sig info
         #filename = sig.filename
         if sig.name() in query_accessions:
@@ -171,7 +181,7 @@ def build_group_to_accession(group_infofile, db_infofile=None):
 def main(args):
     sbt = load_sbt_file(args.sbt)
     query_accessionD, all_acc = build_group_to_accession(args.query_csv, args.database_csv)
-    accession2sig = forage_by_name(sbt, all_acc, args.threshold)
+    accession2sig = forage_by_name(sbt, all_acc, args.threshold, args.duplicates_csv)
     dist_from_species_level = assess_group_distance(query_accessionD, accession2sig)
     plot_all_distances(dist_from_species_level, args.distance_from_species_csv, args.distance_from_species_plot)
 
@@ -180,6 +190,7 @@ if __name__ == "__main__":
     p.add_argument("sbt")
     p.add_argument("--query_csv", required=True)
     p.add_argument("--database_csv")
+    p.add_argument("--duplicates_csv")
     p.add_argument("--threshold", type=int, default=0.1)
     p.add_argument("--distance_from_species_csv", default="path_species_jaccard_dists.csv")
     p.add_argument("--distance_from_species_plot", default="testpaths.boxplot.svg")

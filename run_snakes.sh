@@ -14,6 +14,6 @@
 
 
 
-#snakemake -s grow-and-forage-sbt.snakefile --configfile config/grow_gtdb_sbts.yml --profile farm --cluster-config cluster_config.yml --jobs 10
-snakemake -s grow-and-forage-sbt.snakefile --configfile config/grow_gtdb_sbts.yml --profile default  --jobs 1
+snakemake -s grow-and-forage-sbt.snakefile --configfile config/grow_gtdb_sbts.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 10
+#snakemake -s grow-and-forage-sbt.snakefile --configfile config/grow_gtdb_sbts.yml --profile default  --jobs 1
 

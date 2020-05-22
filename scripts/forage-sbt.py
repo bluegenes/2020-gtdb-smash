@@ -5,6 +5,7 @@ import glob
 import pprint
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
 import screed
 import sourmash
@@ -68,6 +69,7 @@ def assess_group_distance(groupD, acc2sig, abund=False): # provide options for c
         # grab column (or row) from np matrix / dataframe
 
         #given proper ordering above, we can assume jaccard_dist is ordered species::superkingdom
+        # to do: riple check this.
         jaccard_from_species = jaccard_dist[0, :]
         speciesDist[group] = jaccard_from_species
 
@@ -87,11 +89,14 @@ def plot_all_distances(speciesDist, dist_csv, dist_plot=None):
         distDF.to_csv(dist_csv)
     if dist_plot:
         sns.set_style("white")
-        sns.boxplot(data=distDF)
-        sns.stripplot(data=distDF)
-        plt.xlabel("Steps from Common Ancestor", size=18)
-        plt.ylabel("Jaccard Distance", size=18)
-        plt.savefig(filename)
+        plt.figure(figsize=(11,7))
+        plt.xticks(fontsize=14)
+        plt.yticks(fontsize=12)
+        sns.boxplot(data=distDF, palette="GnBu_d")
+        sns.stripplot(data=distDF,color='black',alpha=0.7) #, size=8)
+        plt.xlabel("Common Ancestor", size=18, labelpad=20)
+        plt.ylabel("Jaccard", size=20, labelpad=15)
+        plt.savefig(dist_plot)
 
 
 
@@ -168,7 +173,7 @@ def main(args):
     query_accessionD, all_acc = build_group_to_accession(args.query_csv, args.database_csv)
     accession2sig = forage_by_name(sbt, all_acc, args.threshold)
     dist_from_species_level = assess_group_distance(query_accessionD, accession2sig)
-    plot_all_distances(dist_from_species_level, args.distance_from_species_csv)
+    plot_all_distances(dist_from_species_level, args.distance_from_species_csv, args.distance_from_species_plot)
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
@@ -177,5 +182,6 @@ if __name__ == "__main__":
     p.add_argument("--database_csv")
     p.add_argument("--threshold", type=int, default=0.1)
     p.add_argument("--distance_from_species_csv", default="path_species_jaccard_dists.csv")
+    p.add_argument("--distance_from_species_plot", default="testpaths.boxplot.svg")
     args = p.parse_args()
     sys.exit(main(args))

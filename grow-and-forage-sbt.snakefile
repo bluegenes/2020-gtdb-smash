@@ -80,7 +80,7 @@ rule grow_sbt:
     conda: "envs/forage-env.yml"
     shell:
         """
-        python scripts/grow-sbtmh.py {params.input_dir} --input-is-directory --sbt {output.sbt} --ksize {wildcards.k} --scaled {wildcards.scaled} --alphabet {wildcards.alphabet} --track-abundance --subset-csv {params.subset_csv}
+        python scripts/grow-sbtmh.py {params.input_dir} --input-is-directory --sbt {output.sbt} --ksize {wildcards.k} --scaled {wildcards.scaled} --alphabet {wildcards.alphabet} --track-abundance --subset-csv {params.subset_csv} 2> {log}
         """
 
 def find_forage_inputs(w):
@@ -110,6 +110,6 @@ rule calculate_jaccard_from_common_ancestor:
     conda: "envs/forage-env.yml"
     shell:
         """
-         python scripts/forage-sbt.py {input.sbt} --query_csv {input.query_csv} --distance_from_species_csv {output.csv} --distance_from_species_plot {output.boxblot}  
+        python scripts/forage-sbt.py {input.sbt} --query_csv {input.query_csv} --distance_from_species_csv {output.csv} --distance_from_species_plot {output.boxplot} 2>{log} 
         """
 

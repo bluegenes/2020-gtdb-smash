@@ -106,7 +106,9 @@ def grow_sbt(input_files, sbt_file, ksize, scaled, alpha, abund, input_is_direct
         for name, filename in sig2filename.items():
             out.write(",".join([name, filename]) + "\n")
     with open(dup_sigs, "w") as out:
-        out.write("\n".join(duplicated_md5_sigs))
+        for name in duplicated_md5_sigs:
+            out.write(",".join([name, sig2filename[name]]) + "\n")
+        #out.write("\n".join(duplicated_md5_sigs))
     # save the tree
     # hmm.. overwriting seems complicated but managed? see sourmash/sbt_storage.py
     sbt.save(sbt_file)

@@ -7,6 +7,27 @@ import pprint
 import screed
 import sourmash
 from sourmash.sbtmh import SigLeaf
+import pandas as pd
+
+def csv_reader(groups_file):
+    # autodetect format
+    samples=""
+    if '.tsv' in groups_file or '.csv' in groups_file:
+        separator = '\t'
+        if '.csv' in groups_file:
+            separator = ','
+        try:
+            samples = pd.read_csv(groups_file, dtype=str, sep=separator)
+        except Exception as e:
+            sys.stderr.write(f"\n\tError: {groups_file} file is not properly formatted. Please fix.\n\n")
+            print(e)
+    elif '.xls' in groups_file:
+        try:
+            samples = pd.read_excel(groups_file, dtype=str, sep=separator)
+        except Exception as e:
+            sys.stderr.write(f"\n\tError: {groups_file} file is not properly formatted. Please fix.\n\n")
+            print(e)
+    return samples
 
 
 def maybe_read_fasta_file(fasta_file):
@@ -67,13 +88,19 @@ def load_or_generate_sig(input_file, ksize, scaled, alphabet, abundance):
     return sig
 
 
-def grow_sbt(input_files, sbt_file, ksize, scaled, alpha, abund, input_is_directory, dup_sigs, sig2file):
+def grow_sbt(input_files, sbt_file, ksize, scaled, alpha, abund, input_is_directory, dup_sigs, sig2file, csv_subset):
     sig2filename={}
     duplicated_md5_sigs=set()
     md5sum_set=set()
     if input_is_directory:
         refdir = input_files[0]
-        input_files = [os.path.join(refdir, f) for f in os.listdir(refdir)]
+        if csv_subset:
+            accs = (csv_reader(csv_subset))["accession"].tolist()
+            input_files=[]
+            for acc in accs:
+                input_files+=glob.glob(os.path.join(refdir, f"*{acc}*"))
+        else:
+            input_files = [os.path.join(refdir, f) for f in os.listdir(refdir)]
     # create or load sbt
     sbt = maybe_load_sbt_file(sbt_file)
     # iterate through input files; add to sbt
@@ -94,10 +121,9 @@ def grow_sbt(input_files, sbt_file, ksize, scaled, alpha, abund, input_is_direct
                     # this only records signatures that do not get added.
                     # (original sig with that md5 is in the sbt)
                     duplicated_md5_sigs.add(sig.name())  # don't really need correspondence, do we? just keep set.
-                    sys.stderr.write(f"duplicated md5sum {md5}!")
-
+                    sys.stderr.write(f"duplicated md5sum {sig.name()}!\n")
                     # this is kinda dumb. don't really want to track this if we can help it.
-                    sig2filenames[sig.name()]=sig.filename()
+                    sig2filename[sig.name()]=filename
 
     # keep namemap, becuase the filenames from gtdb-lineage-csv don't seem to be what we need
     # name and filename are kinda redundant here. decide what we want to keep.
@@ -122,15 +148,16 @@ if __name__ == "__main__":
     p.add_argument("--scaled", type=int, default=1000)
     p.add_argument("--alphabet", default="dna")
     p.add_argument("--input-is-directory", action="store_true")
+    p.add_argument("--subset-csv", default=None)
     p.add_argument("--track-abundance", action="store_true")
     args = p.parse_args()
     if not args.sbt.endswith(".sbt.zip"):
         sys.stderr.write("sbt file must end with .sbt.zip")
         sys.exit()
     else:
-        dupes= args.sbt.rsplit(".sbt.zip")[0] + ".md5_duplicates.txt"
+        dupes= args.sbt.rsplit(".sbt.zip")[0] + ".md5_duplicates.csv"
         print(dupes)
         signame2filename= args.sbt.rsplit(".sbt.zip")[0] + ".signame2filenames.csv"
         print(signame2filename)
 
-    sys.exit(grow_sbt(args.input_files, args.sbt, args.ksize, args.scaled, args.alphabet, args.track_abundance, args.input_is_directory, dupes, signame2filename))
+    sys.exit(grow_sbt(args.input_files, args.sbt, args.ksize, args.scaled, args.alphabet, args.track_abundance, args.input_is_directory, dupes, signame2filename, args.subset_csv))

@@ -1,20 +1,42 @@
-index_dir: "gtdb_sbts"
 
-references:
-    gtdb_faa:
-      path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
-      #index_memory: 20000
-      alphabet:
-        protein:
-          ksizes: [7,9,11] #[5,7,9,11]
-          scaled: [1]
-        #dayhoff:
-        #  ksizes: [11,12,13,15] #[9,11,13,15]
-        #  scaled: [1]
-        #hp:
-        #  ksizes: [15,17,19] #,21,23,25] #[15,17,19,21]
-        #  scaled: [1]
-    #gtdb_r89_fna:
-    #  path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_protein_fna
-    #gtdb_r89_dna:
-    #  path: /home/ctbrown/gtdbtk/release89/fastani/database
+
+
+# want to enable passing sbt in == don't rebuild if we already have...
+
+#gtdb_faa:
+
+out_dir: evol_distances
+
+foraging_samples:
+  evol_paths:
+    query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
+    grow_sbt:
+    # these args == generate sbt
+      input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+      subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
+      sbt_outdir: "gtdb_sbts"
+    # alternatively: use a prebuilt sbt, don't generate new one
+    use_existing_sbt:
+      sbt: ""
+      sbt_sig2filenames: ""
+      sbt_duplicates: ""
+  
+    alphabet:
+      protein:
+        ksizes: [7,9,11] #[5,7,9,11]
+        scaled: [1]
+      dayhoff:
+        ksizes: [11,12,13,15] #[9,11,13,15]
+        scaled: [1]
+      hp:
+        ksizes: [15,17,19] #,21,23,25] #[15,17,19,21]
+        scaled: [1]
+# grow full sbt:
+#gtdb_r89_faa:
+  #sbt:
+  #  input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+  
+#gtdb_r89_fna:
+#  path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_protein_fna
+#gtdb_r89_dna:
+#  path: /home/ctbrown/gtdbtk/release89/fastani/database

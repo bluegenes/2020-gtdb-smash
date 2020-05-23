@@ -97,8 +97,8 @@ def add_singleton_sigs(sbt, input_file, ksize, scaled, alphabet, ignore_abundanc
         if records:
             for n, record in enumerate(records):
                 signame = (record.name).rsplit("\t", 1)[0]
-                if n % 1000 == 0:
-                    sys.stderr.write(f"... building {signame} sig {n} of {len(records)}")
+                if n % 10000 == 0:
+                    sys.stderr.write(f"... building {n}th sig, {signame}\n")
 
                 mh = determine_appropriate_fresh_minhash(alphabet, ksize, scaled, ignore_abundance)
                 if alphabet == "dna":
@@ -152,7 +152,7 @@ def grow_singleton_sbt(args):
     for n, filename in enumerate(input_files):
         # swipe some handy progress reporting code from titus:
         if n % 100 == 0:
-            sys.stderr.write(f"... loading {filename} file {n} of {len(input_files)}")
+            sys.stderr.write(f"... loading {filename} file {n} of {len(input_files)}\n")
         sbt = add_singleton_sigs(sbt, filename, args.ksize, args.scaled, args.alphabet, args.ignore_abundance)
 
     # save the tree
@@ -170,7 +170,7 @@ def grow_sbt(args):
     for n, filename in enumerate(input_files):
         # swipe some handy progress reporting code from titus:
         if n % 100 == 0:
-            sys.stderr.write(f"... loading {filename} file {n} of {len(input_files)}")
+            sys.stderr.write(f"... loading {filename} file {n} of {len(input_files)}\n")
 
         # build or load signature from file
         sig = load_or_generate_sig_from_file(filename, args.alphabet, args.ksize, args.scaled, args.ignore_abundance)
@@ -202,4 +202,4 @@ if __name__ == "__main__":
         sys.exit(grow_singleton_sbt(args))
     else:
         sys.exit(grow_sbt(args))
-
+#to do: sourmash throws some warnings(?) when the sbt file exists already

@@ -82,7 +82,7 @@ def load_or_generate_sig_from_file(input_file, alphabet, ksize, scaled, ignore_a
                     #if translate: ... need to do anything differently?
                     mh.add_protein(record.sequence)
             # minhash --> signature, using filename as signature name ..i think this happens automatically if don't provide name?
-            sig = sourmash.SourmashSignature(mh, name=input_file)
+            sig = sourmash.SourmashSignature(mh, name=os.path.basename(input_file))
     return sig
 
 def add_singleton_sigs(sbt, input_file, ksize, scaled, alphabet, ignore_abundance):
@@ -125,6 +125,7 @@ def collect_input_files_from_dir(input_dir, subset_csv=None, subset_info_colname
         try:
             match_strings = set((try_reading_csv(subset_csv))[subset_info_colname].tolist())
             for m in match_strings:
+                # to do: if have filename column, could directly use filenames rather than globbing
                 input_files+=glob.glob(os.path.join(input_dir, f"*{m}*"))
         except:
             sys.stderr.write(f"can't collect input files from dir {input_dir} using subset_csv {subset_csv} column {subset_info_colname}")

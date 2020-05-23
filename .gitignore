@@ -1,0 +1,10 @@
+.snakemake/
+gtdb_r89_rep_genomes_faa*
+*tar.gz
+*svg
+*log
+*/
+*csv
+*tsv
+*txt
+*zip

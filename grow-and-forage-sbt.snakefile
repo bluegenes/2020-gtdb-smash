@@ -39,38 +39,23 @@ query_targets=[]
 for sample, info in sampleInfo.items():    
     if info.get("grow_sbt"):
         # build sbt targets
-        sbt_extensions=["sbt.zip", "signame2filenames.csv", "md5_duplicates.csv"]
         index_dir= info["grow_sbt"]["sbt_outdir"]
         for alpha, alphainfo in info["alphabet"].items():
-            sbt_targets+=expand(os.path.join(index_dir,"{sample}_{alphabet}_scaled{scaled}_k{k}.{ext}"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"], ext=sbt_extensions)
+            sbt_targets+=expand(os.path.join(index_dir,"{sample}_{alphabet}_scaled{scaled}_k{k}.sbt.zip"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
     for alpha, alphainfo in info["alphabet"].items():
         query_targets+=expand(os.path.join(dist_dir, "{sample}_{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.csv"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
 
 rule all:
     input: sbt_targets + query_targets
 
-# ooooof, snakemake finds all these input files just to calculate the dag!
-# do this differently:: just pass in subset csv, handle within the pyscript!
-# == ALWAYS INDEX FROM DIR
-#def find_sbt_input(w):
-#    input_files=[]
-#    if sampleInfo[w.sample]["grow_sbt"].get("subset_csv"):
-#        accs = csv_reader(sampleInfo[w.sample]["grow_sbt"]["subset_csv"])["accession"].tolist()
-#        for acc in accs:
-#            input_files+=glob.glob(os.path.join(sampleInfo[w.sample]["grow_sbt"].get("input_path", ""), "*", f"*{acc}*"))
-#    else:
-#        input_files = sampleInfo[w.sample]["grow_sbt"].get("input_path", "")
-#    return input_files
-
 rule grow_sbt:
- #   input: find_sbt_input
     output: 
         sbt=os.path.join(index_dir,"{sample}_{alphabet}_scaled{scaled}_k{k}.sbt.zip"),
     threads: 1
     params:
         input_dir= lambda w: sampleInfo[w.sample]['grow_sbt']["input_path"],
         subset_csv=lambda w: sampleInfo[w.sample]['grow_sbt'].get('subset_csv', ''),
-        subset_info_colname=lambda w: sampleInfo[w.sample]['grow_sbt'].get('subset_info_colname', 'accession')
+        subset_info_colname=lambda w: sampleInfo[w.sample]['grow_sbt'].get('subset_info_colname', 'filename')
     resources:
         mem_mb=lambda wildcards, attempt: attempt *5000,
         runtime=6000,
@@ -88,7 +73,7 @@ def find_forage_inputs(w):
     if sampleInfo[w.sample].get("grow_sbt", False):
         sbt = rules.grow_sbt.output.sbt,
     else:
-        sbt=sampleInfo[w.sample]["use_existing_sbt"]["sbt"]
+        sbt=sampleInfo[w.sample]["use_existing_sbt"]
     return {"query_csv": query, "sbt": sbt}
 
 
@@ -98,7 +83,7 @@ rule calculate_jaccard_from_common_ancestor:
         csv=os.path.join(dist_dir, "{sample}_{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.csv"),
         boxplot=os.path.join(dist_dir, "plots", "{sample}_{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.svg"),
     params:
-        signature_name_column: lambda w: sampleInfo[w.sample].get('query_signature_name_column_name', 'filename')
+        signature_name_column= lambda w: sampleInfo[w.sample].get('query_signature_name_column_name', 'filename')
     threads: 1
     resources:
         mem_mb=lambda wildcards, attempt: attempt *5000,
@@ -107,11 +92,8 @@ rule calculate_jaccard_from_common_ancestor:
     benchmark: os.path.join(logs_dir, "forage", "{sample}_{alphabet}_scaled{scaled}_k{k}.forage.benchmark")
     conda: "envs/forage-env.yml"
     shell:
-        ## to do: separate out the query csv processing --> other script. assume this query has a column with appropriate filenames or signature names
-        #python scripts/forage-sbt.py {input.sbt} --database_csv {input.database_csv}  --query_csv {input.query_csv} --duplicates_csv {input.duplicates_csv} --distance_from_species_csv {output.csv} --distance_from_species_plot {output.boxplot} 2>{log}
-       
-       # this is how it _should_end up: 
         """
-        python scripts/forage-sbt.py {input.sbt} --query_csv {input.query_csv} --query-signature-name-column {params.signature_name_column}--distance_from_species_csv {output.csv} --distance_from_species_plot {output.boxplot} 2>{log}
+        python scripts/forage-sbt.py {input.sbt} --query-csv {input.query_csv} --signature-name-column {params.signature_name_column} \
+        --distance-from-species-csv {output.csv} --distance-from-species-plot {output.boxplot} 2>{log}
         """
 

@@ -12,6 +12,27 @@ import sourmash
 # why fig doesn't work without this? best practice?
 import sourmash.fig
 
+
+def try_reading_csv(groups_file):
+    # autodetect format
+    if '.tsv' in groups_file or '.csv' in groups_file:
+        separator = '\t'
+        if '.csv' in groups_file:
+            separator = ','
+        try:
+            samples = pd.read_csv(groups_file, dtype=str, sep=separator)
+        except Exception as e:
+            sys.stderr.write(f"\n\tError: {groups_file} file is not properly formatted. Please fix.\n\n")
+            print(e)
+    elif '.xls' in groups_file:
+        try:
+            samples = pd.read_excel(groups_file, dtype=str, sep=separator)
+        except Exception as e:
+            sys.stderr.write(f"\n\tError: {groups_file} file is not properly formatted. Please fix.\n\n")
+            print(e)
+    return samples
+
+
 def load_sbt_file(tree_file):
     if os.path.exists(tree_file):
         try:
@@ -23,27 +44,12 @@ def load_sbt_file(tree_file):
             sys.exit()
 
 
-def forage_by_name(sbt, query_accessions, threshold=0.1, duplicates_csv=None):
+def forage_by_name(sbt, query_signames, threshold=0.1):
     acc2sig = {}
-    num_accs= len(query_accessions)
     num_sigs=0
-    # handle duplicates that don't get added to sbt (temporary. see: https://github.com/dib-lab/sourmash/pull/994)
-    if duplicates_csv:
-        # this ignores empty file.. but there's definitely a better way to do this
-        try:
-            dupes = (pd.read_csv(duplicates_csv)).to_dict()
-            for acc in query_accessions:
-                if acc in dupes.keys():
-                    print(acc)
-                    query_accessions.remove(acc)
-                    #filename = dupes["acc"]
-                    #does the sbt store this info?
-                    #acc2sig[acc] = load_or_generate_sig(filename, ksize, scaled, alpha, abund)
-        except:
-            pass
+    num_accs= len(query_signames)
     for sig in sbt.signatures(): # generator with sig info
-        #filename = sig.filename
-        if sig.name() in query_accessions:
+        if sig.name() in query_signames:
             #print(sig.minhash.get_mins())
             acc2sig[sig.name()] = sig
             num_sigs+=1
@@ -67,7 +73,6 @@ def assess_group_distance(groupD, acc2sig, abund=False): # provide options for c
     speciesDist = {}
     for group, accInfo in groupD.items():
         #siglist = [acc2sig[acc] for acc in accInfo.values()] # get signatures
-
         # take the time or order sigs properly in siglist
         steps_to_common_ancestor = {"species": 0, "genus": 1, "family": 2, "order": 3, "class": 4, "phylum": 5, "superkingdom": 6}
         siglist = [""]*7
@@ -113,89 +118,32 @@ def plot_all_distances(speciesDist, dist_csv, dist_plot=None):
         plt.savefig(dist_plot)
 
 
-
-def csv_reader(groups_file):
-    # autodetect format
-    if '.tsv' in groups_file or '.csv' in groups_file:
-        separator = '\t'
-        if '.csv' in groups_file:
-            separator = ','
-        try:
-            samples = pd.read_csv(groups_file, dtype=str, sep=separator)
-        except Exception as e:
-            sys.stderr.write(f"\n\tError: {groups_file} file is not properly formatted. Please fix.\n\n")
-            print(e)
-    elif '.xls' in groups_file:
-        try:
-            samples = pd.read_excel(groups_file, dtype=str, sep=separator)
-        except Exception as e:
-            sys.stderr.write(f"\n\tError: {groups_file} file is not properly formatted. Please fix.\n\n")
-            print(e)
-    return samples
-
-
-
-def match_sbt_accession(groupInfo, db_infofile, filename=None):
-    # if dataframe doesn't have filename
-    if "filename" not in groupInfo.columns:
-        dbInfo = csv_reader(db_infofile)
-        if "accession" in dbInfo.columns:
-        # add filenames to groupInfo
-            groupInfo=groupInfo.merge(dbInfo[["accession", "filename"]], on=["accession"])
-           #generate sbt_accession from filenames
-            groupInfo["sbt_accession"] = groupInfo["filename"].str.rsplit("_", 1, expand=True)[0]
-        elif "sbt_accession" in dbInfo.columns:
-            dbInfo["acc2"] = dbInfo["sbt_accession"].str.replace("GB_|RS_", "", regex=True) #remove leading GB_ or RS_
-            dbInfo["acc2"] = dbInfo["acc2"].str.rsplit(".", 1, expand=True)[0] #remove trailing .1
-            groupInfo=groupInfo.merge(dbInfo[["acc2", "sbt_accession"]], left_on=["accession"], right_on=["acc2"])
-            groupInfo.drop(["acc2"], axis="columns")
-    else:
-        groupInfo["sbt_accession"] = groupInfo["filename"].str.rsplit("_", 1, expand=True)[0]
-    if filename:
-        if filename.endswith(".csv"):
-            groupInfo.to_csv(filename)
-        elif filename.endswith(".tsv"):
-            groupInfo.to_csv(filename, sep="\t")
-        else:
-            sys.stdout.write(f"Can't write updated groupinfo file. Filename {filename} must end with '.csv' or '.tsv'")
-    return groupInfo
-
-
-def build_group_to_accession(group_infofile, db_infofile=None):
-    groupDF = csv_reader(group_infofile)
-
-    if "sbt_accession" not in groupDF.columns:
-        if not db_infofile:
-            sys.stderr.write(f"your query csv does not have the 'sbt_accession' column. " \
-            "We can autogenerate if you provide an approprate --database_csv file " \
-            "containing the names of hashes in the sbt that will be searched\n")
-            sys.exit()
-
-        updated_groupInfofile = group_infofile.rsplit(".", 1)[0] + ".sbtinfo.csv"
-        groupDF = match_sbt_accession(groupDF, db_infofile, updated_groupInfofile)
-
-    # build group: accession dictionary
-    group2acc = (groupDF.groupby('path').apply(lambda x: dict(zip(x['rank'],x['sbt_accession']))).to_dict())
-    # build set of unique query accessions
-    acc_set = set(groupDF["sbt_accession"].unique())
-    return group2acc, acc_set
-
-
 def main(args):
+    # from query csv, build dictionary of group:: filenames (signature names)
+    groupDF = try_reading_csv(args.query_csv)
+    signame_col = args.signature_name_column
+    if signame_col not in groupDF.columns:
+        sys.stderr.write(f"your query csv does not have the {signame_col} column. " \
+        "we need this column to find corresponding signatures in the sbt.\n")
+        sys.exit()
+
+    group2signame = (groupDF.groupby('path').apply(lambda x: dict(zip(x['rank'],x[signame_col]))).to_dict())
+    signames_to_find = set(groupDF[signame_col].unique())
+
     sbt = load_sbt_file(args.sbt)
-    query_accessionD, all_acc = build_group_to_accession(args.query_csv, args.database_csv)
-    accession2sig = forage_by_name(sbt, all_acc, args.threshold, args.duplicates_csv)
-    dist_from_species_level = assess_group_distance(query_accessionD, accession2sig)
+    # find signatures in sbt
+    signame2sig = forage_by_name(sbt, signames_to_find)#, args.threshold)
+    # assess and plot distances
+    dist_from_species_level = assess_group_distance(group2signame, signame2sig)
     plot_all_distances(dist_from_species_level, args.distance_from_species_csv, args.distance_from_species_plot)
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("sbt")
-    p.add_argument("--query_csv", required=True)
-    p.add_argument("--database_csv")
-    p.add_argument("--duplicates_csv")
-    p.add_argument("--threshold", type=int, default=0.1)
-    p.add_argument("--distance_from_species_csv", default="path_species_jaccard_dists.csv")
-    p.add_argument("--distance_from_species_plot", default="testpaths.boxplot.svg")
+    p.add_argument("--query-csv", required=True)
+    p.add_argument("--signature-name-column", default="filename", help="column with signature names in the sbt. By default, this should be the fasta file basename")
+    #p.add_argument("--threshold", type=int, default=0.1)
+    p.add_argument("--distance-from-species-csv", default="path_species_jaccard_dists.csv")
+    p.add_argument("--distance-from-species-plot", default="testpaths.boxplot.svg")
     args = p.parse_args()
     sys.exit(main(args))

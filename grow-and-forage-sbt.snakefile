@@ -110,6 +110,6 @@ rule calculate_jaccard_from_common_ancestor:
     conda: "envs/forage-env.yml"
     shell:
         """
-        python scripts/forage-sbt.py {input.sbt} --database_csv {input.database_csv}  --query_csv {input.query_csv} --distance_from_species_csv {output.csv} --distance_from_species_plot {output.boxplot} 2>{log}
+        python scripts/forage-sbt.py {input.sbt} --database_csv {input.database_csv}  --query_csv {input.query_csv} --duplicates_csv {input.duplicates_csv} --distance_from_species_csv {output.csv} --distance_from_species_plot {output.boxplot} 2>{log}
         """
 

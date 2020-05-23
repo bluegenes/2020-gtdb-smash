@@ -23,20 +23,24 @@ def load_sbt_file(tree_file):
             sys.exit()
 
 
-def forage_by_name(sbt, query_accessions, threshold=0.1, duplicates_csv):
+def forage_by_name(sbt, query_accessions, threshold=0.1, duplicates_csv=None):
     acc2sig = {}
     num_accs= len(query_accessions)
     num_sigs=0
     # handle duplicates that don't get added to sbt (temporary. see: https://github.com/dib-lab/sourmash/pull/994)
     if duplicates_csv:
-        # test this
-        dupes = pd.read_csv(duplicates_csv).to_dict()
-        for acc in query_accessions:
-            if acc in dupes.keys()
-                query_accessions.remove(acc)
-                #filename = dupes["acc"]
-                #does the sbt store this info?
-                #acc2sig[acc] = load_or_generate_sig(filename, ksize, scaled, alpha, abund)
+        # this ignores empty file.. but there's definitely a better way to do this
+        try:
+            dupes = (pd.read_csv(duplicates_csv)).to_dict()
+            for acc in query_accessions:
+                if acc in dupes.keys():
+                    print(acc)
+                    query_accessions.remove(acc)
+                    #filename = dupes["acc"]
+                    #does the sbt store this info?
+                    #acc2sig[acc] = load_or_generate_sig(filename, ksize, scaled, alpha, abund)
+        except:
+            pass
     for sig in sbt.signatures(): # generator with sig info
         #filename = sig.filename
         if sig.name() in query_accessions:
@@ -70,9 +74,9 @@ def assess_group_distance(groupD, acc2sig, abund=False): # provide options for c
         for rank, acc in accInfo.items():
             idx = steps_to_common_ancestor[rank]
             siglist[idx] = acc2sig[acc]
-        jaccard_dist, labels=sourmash_compare_and_plot(siglist, ignore_abundance=False) #, filename= f"{group}_jaccard.svg") # need ksize, scaled, etc. can we pass in a base name, then add group name?
+        jaccard_dist, labels=sourmash_compare_and_plot(siglist, ignore_abundance=True) #, filename= f"{group}_jaccard.svg") # need ksize, scaled, etc. can we pass in a base name, then add group name?
         if abund:
-            cosine_dist, labels=sourmash_compare_and_plot(siglist, ignore_abundance=True)  #, filename= f"{group}_cosine.svg")
+            cosine_dist, labels=sourmash_compare_and_plot(siglist, ignore_abundance=False)  #, filename= f"{group}_cosine.svg")
         # build distance:: steps_to_common_ancestor!
         # all we care about is the distance from species-level? so every pairwise with that genome.
         # find the accession that is the species entry
@@ -121,7 +125,7 @@ def csv_reader(groups_file):
         except Exception as e:
             sys.stderr.write(f"\n\tError: {groups_file} file is not properly formatted. Please fix.\n\n")
             print(e)
-    elif '.xls' in samples_file:
+    elif '.xls' in groups_file:
         try:
             samples = pd.read_excel(groups_file, dtype=str, sep=separator)
         except Exception as e:
@@ -141,7 +145,7 @@ def match_sbt_accession(groupInfo, db_infofile, filename=None):
            #generate sbt_accession from filenames
             groupInfo["sbt_accession"] = groupInfo["filename"].str.rsplit("_", 1, expand=True)[0]
         elif "sbt_accession" in dbInfo.columns:
-            dbInfo["acc2"] = dbInfo["sbt_accession"].str.split("_", 1, expand=True)[1] #remove leading GB_ or RS_
+            dbInfo["acc2"] = dbInfo["sbt_accession"].str.replace("GB_|RS_", "", regex=True) #remove leading GB_ or RS_
             dbInfo["acc2"] = dbInfo["acc2"].str.rsplit(".", 1, expand=True)[0] #remove trailing .1
             groupInfo=groupInfo.merge(dbInfo[["acc2", "sbt_accession"]], left_on=["accession"], right_on=["acc2"])
             groupInfo.drop(["acc2"], axis="columns")
@@ -171,7 +175,6 @@ def build_group_to_accession(group_infofile, db_infofile=None):
         groupDF = match_sbt_accession(groupDF, db_infofile, updated_groupInfofile)
 
     # build group: accession dictionary
-    #group2acc = groupDF.groupby('path').agg({'sbt_accession':lambda x: list(x)}).to_dict()["sbt_accession"]
     group2acc = (groupDF.groupby('path').apply(lambda x: dict(zip(x['rank'],x['sbt_accession']))).to_dict())
     # build set of unique query accessions
     acc_set = set(groupDF["sbt_accession"].unique())

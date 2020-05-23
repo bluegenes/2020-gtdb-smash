@@ -66,12 +66,11 @@ rule grow_sbt:
  #   input: find_sbt_input
     output: 
         sbt=os.path.join(index_dir,"{sample}_{alphabet}_scaled{scaled}_k{k}.sbt.zip"),
-        database_csv=os.path.join(index_dir,"{sample}_{alphabet}_scaled{scaled}_k{k}.signame2filenames.csv"),
-        duplicates_csv=os.path.join(index_dir,"{sample}_{alphabet}_scaled{scaled}_k{k}.md5_duplicates.csv"),
     threads: 1
     params:
         input_dir= lambda w: sampleInfo[w.sample]['grow_sbt']["input_path"],
-        subset_csv=lambda w: sampleInfo[w.sample]['grow_sbt'].get('subset_csv', '')
+        subset_csv=lambda w: sampleInfo[w.sample]['grow_sbt'].get('subset_csv', ''),
+        subset_info_colname=lambda w: sampleInfo[w.sample]['grow_sbt'].get('subset_info_colname', 'accession')
     resources:
         mem_mb=lambda wildcards, attempt: attempt *5000,
         runtime=6000,
@@ -80,20 +79,17 @@ rule grow_sbt:
     conda: "envs/forage-env.yml"
     shell:
         """
-        python scripts/grow-sbtmh.py {params.input_dir} --input-is-directory --sbt {output.sbt} --ksize {wildcards.k} --scaled {wildcards.scaled} --alphabet {wildcards.alphabet} --track-abundance --subset-csv {params.subset_csv} --force-new 2> {log}
+        python scripts/grow-sbtmh.py {params.input_dir} --input-is-directory --sbt {output.sbt} --ksize {wildcards.k} --scaled {wildcards.scaled} --alphabet {wildcards.alphabet} --subset-csv {params.subset_csv} --subset-info-colname {params.subset_info_colname} 2> {log}
         """
 
 def find_forage_inputs(w):
+    # just require this query to have filenames of interest as a column
     query = sampleInfo[w.sample]["query_csv"]
     if sampleInfo[w.sample].get("grow_sbt", False):
         sbt = rules.grow_sbt.output.sbt,
-        db = rules.grow_sbt.output.database_csv
-        dup = rules.grow_sbt.output.duplicates_csv
     else:
         sbt=sampleInfo[w.sample]["use_existing_sbt"]["sbt"]
-        db=sampleInfo[w.sample]["use_existing_sbt"]["sbt_sig2filenames"]
-        dup=sampleInfo[w.sample]["use_existing_sbt"]["sbt_duplicates"]
-    return {"query_csv": query, "sbt": sbt, "database_csv": db, "duplicates_csv": dup}
+    return {"query_csv": query, "sbt": sbt}
 
 
 rule calculate_jaccard_from_common_ancestor:
@@ -101,6 +97,8 @@ rule calculate_jaccard_from_common_ancestor:
     output: 
         csv=os.path.join(dist_dir, "{sample}_{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.csv"),
         boxplot=os.path.join(dist_dir, "plots", "{sample}_{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.svg"),
+    params:
+        signature_name_column: lambda w: sampleInfo[w.sample].get('query_signature_name_column_name', 'filename')
     threads: 1
     resources:
         mem_mb=lambda wildcards, attempt: attempt *5000,
@@ -109,7 +107,11 @@ rule calculate_jaccard_from_common_ancestor:
     benchmark: os.path.join(logs_dir, "forage", "{sample}_{alphabet}_scaled{scaled}_k{k}.forage.benchmark")
     conda: "envs/forage-env.yml"
     shell:
+        ## to do: separate out the query csv processing --> other script. assume this query has a column with appropriate filenames or signature names
+        #python scripts/forage-sbt.py {input.sbt} --database_csv {input.database_csv}  --query_csv {input.query_csv} --duplicates_csv {input.duplicates_csv} --distance_from_species_csv {output.csv} --distance_from_species_plot {output.boxplot} 2>{log}
+       
+       # this is how it _should_end up: 
         """
-        python scripts/forage-sbt.py {input.sbt} --database_csv {input.database_csv}  --query_csv {input.query_csv} --duplicates_csv {input.duplicates_csv} --distance_from_species_csv {output.csv} --distance_from_species_plot {output.boxplot} 2>{log}
+        python scripts/forage-sbt.py {input.sbt} --query_csv {input.query_csv} --query-signature-name-column {params.signature_name_column}--distance_from_species_csv {output.csv} --distance_from_species_plot {output.boxplot} 2>{log}
         """
 

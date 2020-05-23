@@ -9,7 +9,7 @@ import sourmash
 from sourmash.sbtmh import SigLeaf
 import pandas as pd
 
-def csv_reader(groups_file):
+def try_reading_csv(groups_file):
     # autodetect format
     samples=""
     if '.tsv' in groups_file or '.csv' in groups_file:
@@ -30,21 +30,18 @@ def csv_reader(groups_file):
     return samples
 
 
-def maybe_read_fasta_file(fasta_file):
+def try_reading_fasta_file(fasta_file):
     records=[]
-    accession=""
     try:
         records=screed.open(fasta_file)
-         # build a short name for this signature using the filename
-        accession = os.path.basename(fasta_file.rsplit("_", 1)[0])
     except:
         # log the error somehow
         sys.stderr.write(f"\ncannot read fasta file {fasta_file}\n")
-    return records, accession
+    return records
 
-
-def maybe_load_sbt_file(tree_file, force_new):
-    if os.path.exists(tree_file) and not force_new:
+def create_sbt_or_load_existing(tree_file, load_existing=False):
+    # hmm.. adding and overwriting seems complicated but managed? see sourmash/sbt_storage.py
+    if os.path.exists(tree_file) and load_existing:
         try:
             sbt = sourmash.load_sbt_index(tree_file)
         except:
@@ -53,8 +50,9 @@ def maybe_load_sbt_file(tree_file, force_new):
         sbt = sourmash.create_sbt_index()
     return sbt
 
-
-def determine_appropriate_fresh_minhash(ksize, scaled_val, abund, alphabet):
+def determine_appropriate_fresh_minhash(alphabet, ksize, scaled_val, ignore_abundance=False):
+    # default behavior is to track abundance
+    abund = not ignore_abundance
     if alphabet == "dna":
         mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled_val, track_abundance=abund, is_protein=False)
     elif alphabet == "protein":
@@ -65,16 +63,17 @@ def determine_appropriate_fresh_minhash(ksize, scaled_val, abund, alphabet):
         mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled_val, track_abundance=abund, is_protein=True, dayhoff=False, hp=True)
     return mh
 
-
-def load_or_generate_sig(input_file, ksize, scaled, alphabet, abundance):
+def load_or_generate_sig_from_file(input_file, alphabet, ksize, scaled, ignore_abundance):
     sig=""
     if input_file.endswith(".sig"):
         sig = sourmash.load_one_signature(input_file, ksize=ksize)
     else:
         # read file and add sigs
-        records, accession = maybe_read_fasta_file(input_file)
+        records = try_reading_fasta_file(input_file)
+        # build signature name from filename .. maybe just keep filename?
+        #signame = os.path.basename(input_file.rsplit("_", 1)[0])
         # start with fresh minhash
-        mh = determine_appropriate_fresh_minhash(ksize, scaled, abundance, alphabet)
+        mh = determine_appropriate_fresh_minhash(alphabet, ksize, scaled, ignore_abundance)
         if records:
             for record in records:
                 if alphabet == "dna":
@@ -82,61 +81,106 @@ def load_or_generate_sig(input_file, ksize, scaled, alphabet, abundance):
                 else:
                     #if translate: ... need to do anything differently?
                     mh.add_protein(record.sequence)
-            # minhash --> signature
-            sig = sourmash.SourmashSignature(mh, name=accession)
+            # minhash --> signature, using filename as signature name ..i think this happens automatically if don't provide name?
+            sig = sourmash.SourmashSignature(mh, name=input_file)
     return sig
 
+def add_singleton_sigs(sbt, input_file, ksize, scaled, alphabet, ignore_abundance):
+    if input_file.endswith(".sig"):
+        # maybe this? haven't tested!!
+        sigs = sourmash.signature.load_signatures(input_file, ksize=ksize, select_moltype=alphabet)
+        # loop through and add each to sbt
+    else:
+        # read file and add sigs
+        records = try_reading_fasta_file(input_file)
+        # start with fresh minhash
+        if records:
+            for n, record in enumerate(records):
+                signame = (record.name).rsplit("\t", 1)[0]
+                if n % 1000 == 0:
+                    sys.stderr.write(f"... building {signame} sig {n} of {len(records)}")
 
-def grow_sbt(input_files, sbt_file, ksize, scaled, alpha, abund, input_is_directory, dup_sigs, sig2file, csv_subset, force_new):
-    sig2filename={}
-    duplicated_md5_sigs=set()
-    md5sum_set=set()
-    if input_is_directory:
-        refdir = input_files[0]
-        if csv_subset:
-            accs = set((csv_reader(csv_subset))["accession"].tolist())
-            input_files=[]
-            for acc in accs:
-                input_files+=glob.glob(os.path.join(refdir, f"*{acc}*"))
-        else:
-            input_files = [os.path.join(refdir, f) for f in os.listdir(refdir)]
-    # create or load sbt
-    sbt = maybe_load_sbt_file(sbt_file, force_new)
+                mh = determine_appropriate_fresh_minhash(alphabet, ksize, scaled, ignore_abundance)
+                if alphabet == "dna":
+                    mh.add_sequence(record.sequence)
+                else:
+                    #if translate: ... need to do anything differently?
+                    mh.add_protein(record.sequence)
+            # minhash --> signature
+                sig = sourmash.SourmashSignature(mh, name=signame)
+                if sig.minhash:
+                    leaf = SigLeaf(sig.md5sum(), sig)
+                    sbt.add_node(leaf)
+    return sbt
+
+
+def collect_input_files_from_dir(input_dir, subset_csv=None, subset_info_colname="accession"):
+    """
+    Scan a directory for input fasta or signature files.
+    If subset_csv is provided, glob the directory for the pattern provided in the
+    subset_info_colname column.
+    """
+    input_files=[]
+    if subset_csv:
+        try:
+            match_strings = set((try_reading_csv(subset_csv))[subset_info_colname].tolist())
+            for m in match_strings:
+                input_files+=glob.glob(os.path.join(input_dir, f"*{m}*"))
+        except:
+            sys.stderr.write(f"can't collect input files from dir {input_dir} using subset_csv {subset_csv} column {subset_info_colname}")
+            sys.exit()
+    else:
+        input_files = [os.path.join(input_dir, f) for f in os.listdir(input_dir)]
+    if not input_files:
+        sys.stderr.write(f"can't collect input files from dir {input_dir}")
+        sys.exit()
+    return input_files
+
+
+def grow_singleton_sbt(args):
+
+    # find input files if necessary
+    input_files = args.input_files
+    if args.input_is_directory:
+        input_files = collect_input_files_from_dir(input_files[0], args.subset_csv, args.subset_info_colname)
+
+    # load or create sbt
+    sbt = create_sbt_or_load_existing(args.sbt, args.load_existing_sbt)
+
     # iterate through input files; add to sbt
     for n, filename in enumerate(input_files):
         # swipe some handy progress reporting code from titus:
         if n % 100 == 0:
             sys.stderr.write(f"... loading {filename} file {n} of {len(input_files)}")
-        sig = load_or_generate_sig(filename, ksize, scaled, alpha, abund)
+        sbt = add_singleton_sigs(sbt, filename, args.ksize, args.scaled, args.alphabet, args.ignore_abundance)
+
+    # save the tree
+    sbt.save(args.sbt)
+
+def grow_sbt(args):
+    # find input files if necessary
+    input_files = args.input_files
+    if args.input_is_directory:
+        input_files = collect_input_files_from_dir(input_files[0], args.subset_csv, args.subset_info_colname)
+
+    # create or load sbt
+    sbt = create_sbt_or_load_existing(args.sbt, args.load_existing_sbt)
+    # iterate through input files; add to sbt
+    for n, filename in enumerate(input_files):
+        # swipe some handy progress reporting code from titus:
+        if n % 100 == 0:
+            sys.stderr.write(f"... loading {filename} file {n} of {len(input_files)}")
+
+        # build or load signature from file
+        sig = load_or_generate_sig_from_file(filename, args.alphabet, args.ksize, args.scaled, args.ignore_abundance)
+        # add to sbt
         if sig: # is this necessary?
             if sig.minhash:
-                sig2filename[sig.name()]=filename
-                md5 = sig.md5sum()
-                if md5 not in md5sum_set:
-                    leaf = SigLeaf(md5, sig)
-                    sbt.add_node(leaf)
-                    md5sum_set.add(md5)
-                else:
-                    # this only records signatures that do not get added.
-                    # (original sig with that md5 is in the sbt)
-                    duplicated_md5_sigs.add(sig.name())  # don't really need correspondence, do we? just keep set.
-                    sys.stderr.write(f"duplicated md5sum {sig.name()}!\n")
-                    # this is kinda dumb. don't really want to track this if we can help it.
-                    sig2filename[sig.name()]=filename
+                leaf = SigLeaf(sig.md5sum(), sig)
+                sbt.add_node(leaf)
 
-    # keep namemap, becuase the filenames from gtdb-lineage-csv don't seem to be what we need
-    # name and filename are kinda redundant here. decide what we want to keep.
-    with open(sig2file, "w") as out:
-        out.write(",".join(["sbt_accession", "filename"]) + "\n")
-        for name, filename in sig2filename.items():
-            out.write(",".join([name, filename]) + "\n")
-    with open(dup_sigs, "w") as out:
-        for name in duplicated_md5_sigs:
-            out.write(",".join([name, sig2filename[name]]) + "\n")
-        #out.write("\n".join(duplicated_md5_sigs))
     # save the tree
-    # hmm.. overwriting seems complicated but managed? see sourmash/sbt_storage.py
-    sbt.save(sbt_file)
+    sbt.save(args.sbt)
 
 
 if __name__ == "__main__":
@@ -145,19 +189,16 @@ if __name__ == "__main__":
     p.add_argument("--sbt")
     p.add_argument("--ksize", type=int, default=31)
     p.add_argument("--scaled", type=int, default=1000)
-    p.add_argument("--alphabet", default="dna")
-    p.add_argument("--input-is-directory", action="store_true")
-    p.add_argument("--subset-csv", default=None)
-    p.add_argument("--track-abundance", action="store_true")
-    p.add_argument("--force-new", action="store_true")
+    p.add_argument("--alphabet", default="dna", help="options: dna, protein, dayhoff, or hp")
+    p.add_argument("--input-is-directory", action="store_true", help="the input is a directory, rather than a file or series of files")
+    p.add_argument("--subset-csv", default=None, help="provide a csv with info for choosing a subset of files from the input dir.")
+    p.add_argument("--subset-info-colname", default="accession", help="specify the column name in the csv that will be used to glob files.")
+    p.add_argument("--ignore-abundance", action="store_true", help="do not store abundance information for signatures")
+    p.add_argument("--load-existing-sbt", action="store_true", help="load the sbt file if it exists. Turns off default overwrite of sbt file with new sbt.")
+    p.add_argument("--singleton", action="store_true", help="with fasta inputs, add one signature per fasta entry, rather than one per file")
     args = p.parse_args()
-    if not args.sbt.endswith(".sbt.zip"):
-        sys.stderr.write("sbt file must end with .sbt.zip")
-        sys.exit()
+    if args.singleton:
+        sys.exit(grow_singleton_sbt(args))
     else:
-        dupes= args.sbt.rsplit(".sbt.zip")[0] + ".md5_duplicates.csv"
-        print(dupes)
-        signame2filename= args.sbt.rsplit(".sbt.zip")[0] + ".signame2filenames.csv"
-        print(signame2filename)
+        sys.exit(grow_sbt(args))
 
-    sys.exit(grow_sbt(args.input_files, args.sbt, args.ksize, args.scaled, args.alphabet, args.track_abundance, args.input_is_directory, dupes, signame2filename, args.subset_csv, args.force_new))

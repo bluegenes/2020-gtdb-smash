@@ -41,7 +41,7 @@ def try_reading_fasta_file(fasta_file):
 
 def create_sbt_or_load_existing(tree_file, load_existing=False):
     # hmm.. adding and overwriting seems complicated but managed? see sourmash/sbt_storage.py
-    if os.path.exists(tree_file) and load_existing:
+    if load_existing:
         try:
             sbt = sourmash.load_sbt_index(tree_file)
         except:
@@ -56,14 +56,17 @@ def determine_appropriate_fresh_minhash(alphabet, ksize, scaled_val, ignore_abun
     if alphabet == "dna":
         mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled_val, track_abundance=abund, is_protein=False)
     elif alphabet == "protein":
-        mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled_val, track_abundance=abund, is_protein=True, dayhoff=False, hp=False)
+        k=ksize*3 ## need to multiply bt 3 to get same ksize, bc add_protein method does k/3!!!!!!!!!!!!!!
+        mh = sourmash.MinHash(ksize=k, n=0, scaled=scaled_val, track_abundance=abund, is_protein=True, dayhoff=False, hp=False)
     elif alphabet == "dayhoff":
-        mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled_val, track_abundance=abund, is_protein=True, dayhoff=True, hp=False)
+        k=ksize*3
+        mh = sourmash.MinHash(ksize=k, n=0, scaled=scaled_val, track_abundance=abund, is_protein=True, dayhoff=True, hp=False)
     elif alphabet == "hp":
-        mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled_val, track_abundance=abund, is_protein=True, dayhoff=False, hp=True)
+        k=ksize*3
+        mh = sourmash.MinHash(ksize=k, n=0, scaled=scaled_val, track_abundance=abund, is_protein=True, dayhoff=False, hp=True)
     return mh
 
-def load_or_generate_sig_from_file(input_file, alphabet, ksize, scaled, ignore_abundance):
+def load_or_generate_sig_from_file(input_file, alphabet, ksize, scaled, ignore_abundance=False, translate=False):
     sig=""
     if input_file.endswith(".sig"):
         sig = sourmash.load_one_signature(input_file, ksize=ksize)
@@ -76,16 +79,15 @@ def load_or_generate_sig_from_file(input_file, alphabet, ksize, scaled, ignore_a
         mh = determine_appropriate_fresh_minhash(alphabet, ksize, scaled, ignore_abundance)
         if records:
             for record in records:
-                if alphabet == "dna":
+                if alphabet == "dna" or translate:
                     mh.add_sequence(record.sequence)
                 else:
-                    #if translate: ... need to do anything differently?
                     mh.add_protein(record.sequence)
             # minhash --> signature, using filename as signature name ..i think this happens automatically if don't provide name?
             sig = sourmash.SourmashSignature(mh, name=os.path.basename(input_file))
     return sig
 
-def add_singleton_sigs(sbt, input_file, ksize, scaled, alphabet, ignore_abundance):
+def add_singleton_sigs(sbt, input_file, ksize, scaled, alphabet, ignore_abundance=False, translate=False):
     if input_file.endswith(".sig"):
         # maybe this? haven't tested!!
         sigs = sourmash.signature.load_signatures(input_file, ksize=ksize, select_moltype=alphabet)
@@ -101,10 +103,9 @@ def add_singleton_sigs(sbt, input_file, ksize, scaled, alphabet, ignore_abundanc
                     sys.stderr.write(f"... building {n}th sig, {signame}\n")
 
                 mh = determine_appropriate_fresh_minhash(alphabet, ksize, scaled, ignore_abundance)
-                if alphabet == "dna":
+                if alphabet == "dna" or translate:
                     mh.add_sequence(record.sequence)
                 else:
-                    #if translate: ... need to do anything differently?
                     mh.add_protein(record.sequence)
             # minhash --> signature
                 sig = sourmash.SourmashSignature(mh, name=signame)
@@ -153,7 +154,7 @@ def grow_singleton_sbt(args):
         # swipe some handy progress reporting code from titus:
         if n % 100 == 0:
             sys.stderr.write(f"... loading {filename} file {n} of {len(input_files)}\n")
-        sbt = add_singleton_sigs(sbt, filename, args.ksize, args.scaled, args.alphabet, args.ignore_abundance)
+        sbt = add_singleton_sigs(sbt, filename, args.ksize, args.scaled, args.alphabet, args.ignore_abundance, args.translate)
 
     # save the tree
     sbt.save(args.sbt)
@@ -173,7 +174,7 @@ def grow_sbt(args):
             sys.stderr.write(f"... loading {filename} file {n} of {len(input_files)}\n")
 
         # build or load signature from file
-        sig = load_or_generate_sig_from_file(filename, args.alphabet, args.ksize, args.scaled, args.ignore_abundance)
+        sig = load_or_generate_sig_from_file(filename, args.alphabet, args.ksize, args.scaled, args.ignore_abundance, args.translate)
         # add to sbt
         if sig: # is this necessary?
             if sig.minhash:
@@ -190,7 +191,8 @@ if __name__ == "__main__":
     p.add_argument("--sbt")
     p.add_argument("--ksize", type=int, default=31)
     p.add_argument("--scaled", type=int, default=1000)
-    p.add_argument("--alphabet", default="dna", help="options: dna, protein, dayhoff, or hp")
+    p.add_argument("--alphabet", default="dna", help="desired alphabet for sourmash signatures. options: dna, protein, dayhoff, or hp")
+    p.add_argument("--translate", action="store_true", help="translate nucleotide input to the desired alphabet")
     p.add_argument("--input-is-directory", action="store_true", help="the input is a directory, rather than a file or series of files")
     p.add_argument("--subset-csv", default=None, help="provide a csv with info for choosing a subset of files from the input dir.")
     p.add_argument("--subset-info-colname", default="accession", help="specify the column name in the csv that will be used to glob files.")

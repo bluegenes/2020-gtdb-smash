@@ -105,7 +105,7 @@ def plot_all_distances(speciesDist, dist_csv, dist_plot=None):
     # this imports with path as the rownames.
     distDF = pd.DataFrame.from_dict(speciesDist, orient="index", columns= rank_order)
     with open(dist_csv, "w") as out:
-        distDF.to_csv(dist_csv)
+        distDF.to_csv(dist_csv,index=False)
     if dist_plot:
         sns.set_style("white")
         plt.figure(figsize=(11,7))

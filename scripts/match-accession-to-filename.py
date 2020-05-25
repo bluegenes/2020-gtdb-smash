@@ -49,7 +49,7 @@ def main(args):
     # glob for filenames
     queryDF = queryDF.apply(find_filename, axis=1, args=(args.sigfile_directory,args.identifier_column, args.full_paths))
     # write full csv
-    queryDF.to_csv(args.output_csv)
+    queryDF.to_csv(args.output_csv, index=False)
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()

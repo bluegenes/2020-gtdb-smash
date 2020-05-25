@@ -53,7 +53,7 @@ def create_sbt_or_load_existing(tree_file, load_existing=False):
 def determine_appropriate_fresh_minhash(alphabet, ksize, scaled_val, ignore_abundance=False):
     # default behavior is to track abundance
     abund = not ignore_abundance
-    if alphabet == "dna":
+    if alphabet == "nucleotide":
         mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled_val, track_abundance=abund, is_protein=False)
     elif alphabet == "protein":
         k=ksize*3 ## need to multiply bt 3 to get same ksize, bc add_protein method does k/3!!!!!!!!!!!!!!
@@ -79,8 +79,8 @@ def load_or_generate_sig_from_file(input_file, alphabet, ksize, scaled, ignore_a
         mh = determine_appropriate_fresh_minhash(alphabet, ksize, scaled, ignore_abundance)
         if records:
             for record in records:
-                if alphabet == "dna" or translate:
-                    mh.add_sequence(record.sequence)
+                if alphabet == "nucleotide" or translate:
+                    mh.add_sequence(record.sequence, force=True)
                 else:
                     mh.add_protein(record.sequence)
             # minhash --> signature, using filename as signature name ..i think this happens automatically if don't provide name?
@@ -103,8 +103,8 @@ def add_singleton_sigs(sbt, input_file, ksize, scaled, alphabet, ignore_abundanc
                     sys.stderr.write(f"... building {n}th sig, {signame}\n")
 
                 mh = determine_appropriate_fresh_minhash(alphabet, ksize, scaled, ignore_abundance)
-                if alphabet == "dna" or translate:
-                    mh.add_sequence(record.sequence)
+                if alphabet == "nucleotide" or translate:
+                    mh.add_sequence(record.sequence, force=True)
                 else:
                     mh.add_protein(record.sequence)
             # minhash --> signature
@@ -152,8 +152,8 @@ def grow_singleton_sbt(args):
     # iterate through input files; add to sbt
     for n, filename in enumerate(input_files):
         # swipe some handy progress reporting code from titus:
-        if n % 100 == 0:
-            sys.stderr.write(f"... loading {filename} file {n} of {len(input_files)}\n")
+        #if n % 100 == 0:
+        sys.stderr.write(f"... loading {filename} file {n} of {len(input_files)}\n")
         sbt = add_singleton_sigs(sbt, filename, args.ksize, args.scaled, args.alphabet, args.ignore_abundance, args.translate)
 
     # save the tree
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     p.add_argument("--sbt")
     p.add_argument("--ksize", type=int, default=31)
     p.add_argument("--scaled", type=int, default=1000)
-    p.add_argument("--alphabet", default="dna", help="desired alphabet for sourmash signatures. options: dna, protein, dayhoff, or hp")
+    p.add_argument("--alphabet", default="nucleotide", help="desired alphabet for sourmash signatures. options: nucleotide, protein, dayhoff, or hp")
     p.add_argument("--translate", action="store_true", help="translate nucleotide input to the desired alphabet")
     p.add_argument("--input-is-directory", action="store_true", help="the input is a directory, rather than a file or series of files")
     p.add_argument("--subset-csv", default=None, help="provide a csv with info for choosing a subset of files from the input dir.")

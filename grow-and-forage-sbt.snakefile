@@ -7,7 +7,7 @@ import os
 import glob
 import pandas as pd
 
-def csv_reader(groups_file):
+def try_reading_csv(groups_file):
     # autodetect format
     if '.tsv' in groups_file or '.csv' in groups_file:
         separator = '\t'
@@ -18,7 +18,7 @@ def csv_reader(groups_file):
         except Exception as e:
             sys.stderr.write(f"\n\tError: {groups_file} file is not properly formatted. Please fix.\n\n")
             print(e)
-    elif '.xls' in samples_file:
+    elif '.xls' in groups_file:
         try:
             samples = pd.read_excel(groups_file, dtype=str, sep=separator)
         except Exception as e:
@@ -41,30 +41,33 @@ for sample, info in sampleInfo.items():
         # build sbt targets
         index_dir= info["grow_sbt"]["sbt_outdir"]
         for alpha, alphainfo in info["alphabet"].items():
-            sbt_targets+=expand(os.path.join(index_dir,"{sample}_{alphabet}_scaled{scaled}_k{k}.sbt.zip"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+            sbt_targets+=expand(os.path.join(index_dir,"{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.zip"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
     for alpha, alphainfo in info["alphabet"].items():
-        query_targets+=expand(os.path.join(dist_dir, "{sample}_{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.csv"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+        query_targets+=expand(os.path.join(dist_dir, "{sample}.{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.csv"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
 
 rule all:
     input: sbt_targets + query_targets
 
 rule grow_sbt:
     output: 
-        sbt=os.path.join(index_dir,"{sample}_{alphabet}_scaled{scaled}_k{k}.sbt.zip"),
+        sbt=os.path.join(index_dir,"{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.zip"),
     threads: 1
     params:
         input_dir= lambda w: sampleInfo[w.sample]['grow_sbt']["input_path"],
         subset_csv=lambda w: sampleInfo[w.sample]['grow_sbt'].get('subset_csv', ''),
-        subset_info_colname=lambda w: sampleInfo[w.sample]['grow_sbt'].get('subset_info_colname', 'filename')
+        subset_info_colname=lambda w: sampleInfo[w.sample]['grow_sbt'].get('subset_info_colname', 'filename'),
+        alpha= lambda w: w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet, # remove translate
+        translate = lambda w: " --translate " if w.alphabet.startswith("translate") else "",
     resources:
         mem_mb=lambda wildcards, attempt: attempt *5000,
         runtime=6000,
-    log: os.path.join(logs_dir, "grow-sbt", "{sample}_{alphabet}_scaled{scaled}_k{k}.grow.log")
-    benchmark: os.path.join(logs_dir, "grow-sbt", "{sample}_{alphabet}_scaled{scaled}_k{k}.grow.benchmark")
+    log: os.path.join(logs_dir, "grow-sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.grow.log")
+    benchmark: os.path.join(logs_dir, "grow-sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.grow.benchmark")
     conda: "envs/forage-env.yml"
     shell:
+        # escaped quotes allows for "*" in input dir
         """
-        python scripts/grow-sbtmh.py {params.input_dir} --input-is-directory --sbt {output.sbt} --ksize {wildcards.k} --scaled {wildcards.scaled} --alphabet {wildcards.alphabet} --subset-csv {params.subset_csv} --subset-info-colname {params.subset_info_colname} 2> {log}
+        python scripts/grow-sbtmh.py \"{params.input_dir}\" --input-is-directory --sbt {output.sbt} --ksize {wildcards.k} --scaled {wildcards.scaled} --alphabet {params.alpha} --subset-csv {params.subset_csv} --subset-info-colname {params.subset_info_colname} {params.translate} 2> {log}
         """
 
 def find_forage_inputs(w):
@@ -80,16 +83,16 @@ def find_forage_inputs(w):
 rule calculate_jaccard_from_common_ancestor:
     input: unpack(find_forage_inputs)
     output: 
-        csv=os.path.join(dist_dir, "{sample}_{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.csv"),
-        boxplot=os.path.join(dist_dir, "plots", "{sample}_{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.svg"),
+        csv=os.path.join(dist_dir, "{sample}.{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.csv"),
+        boxplot=os.path.join(dist_dir, "plots", "{sample}.{alphabet}_scaled{scaled}_k{k}.jaccard_from_species.svg"),
     params:
         signature_name_column= lambda w: sampleInfo[w.sample].get('query_signature_name_column_name', 'filename')
     threads: 1
     resources:
         mem_mb=lambda wildcards, attempt: attempt *5000,
         runtime=1200,
-    log: os.path.join(logs_dir, "forage", "{sample}_{alphabet}_scaled{scaled}_k{k}.forage.log")
-    benchmark: os.path.join(logs_dir, "forage", "{sample}_{alphabet}_scaled{scaled}_k{k}.forage.benchmark")
+    log: os.path.join(logs_dir, "forage", "{sample}.{alphabet}_scaled{scaled}_k{k}.forage.log")
+    benchmark: os.path.join(logs_dir, "forage", "{sample}.{alphabet}_scaled{scaled}_k{k}.forage.benchmark")
     conda: "envs/forage-env.yml"
     shell:
         """

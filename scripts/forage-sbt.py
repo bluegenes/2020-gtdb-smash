@@ -104,6 +104,8 @@ def plot_all_distances(speciesDist, dist_csv, dist_plot=None):
     rank_order= ["species", "genus", "family", "order", "class", "phylum", "superkingdom"]
     # this imports with path as the rownames.
     distDF = pd.DataFrame.from_dict(speciesDist, orient="index", columns= rank_order)
+    # species info is always 100% and therefore useless/compressing plot info. try dropping!
+    distDF.drop(['species',], axis=1, inplace=True)
     with open(dist_csv, "w") as out:
         distDF.to_csv(dist_csv,index=False)
     if dist_plot:

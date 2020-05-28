@@ -88,7 +88,7 @@ def assess_group_distance(groupD, acc2sig, abund=False): # provide options for c
         # grab column (or row) from np matrix / dataframe
 
         #given proper ordering above, we can assume jaccard_dist is ordered species::superkingdom
-        # to do: riple check this.
+        # to do: triple check this.
         jaccard_from_species = jaccard_dist[0, :]
         speciesDist[group] = jaccard_from_species
 
@@ -104,8 +104,9 @@ def plot_all_distances(speciesDist, dist_csv, dist_plot=None):
     rank_order= ["species", "genus", "family", "order", "class", "phylum", "superkingdom"]
     # this imports with path as the rownames.
     distDF = pd.DataFrame.from_dict(speciesDist, orient="index", columns= rank_order)
+
     with open(dist_csv, "w") as out:
-        distDF.to_csv(dist_csv,index=False)
+        distDF.to_csv(dist_csv)
     if dist_plot:
         sns.set_style("white")
         plt.figure(figsize=(11,7))

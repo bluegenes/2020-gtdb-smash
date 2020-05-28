@@ -1,95 +1,25 @@
 
 
-
-# want to enable passing sbt in == don't rebuild if we already have...
-
-#gtdb_faa:
-
 out_dir: evol_distances
 
 foraging_samples:
 # grow full evol paths sbt:
-  #evol_paths:
-      #input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
-      #query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
-      #input_path: /home/ntpierce/2020-gtdb-smash/gtdb_faa_pathsonly
-      #subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
-      #sbt_outdir: "evol_distances/sbts"
-    #alphabet:
-    #  protein:
-    #    ksizes: [7,9,11] #[5,7,9,11]
-    #    scaled: [1]
-    #  dayhoff:
-    #    ksizes: [11,12,13,15] #[9,11,13,15]
-    #    scaled: [1]
-    #  hp:
-    #    ksizes: [15,17,19] #,21,23,25] #[15,17,19,21]
-    #    scaled: [1]
-
-  evol_paths_first_seven:
-    query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups_first_seven.with_filenames.csv
-    use_existing_sbt: ""  # alternatively: use a prebuilt sbt, don't generate new one 
-    grow_sbt:
-    # these args generate sbt
-      input_path: /home/ntpierce/2020-gtdb-smash/gtdb_faa_pathsonly
-      subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups_first_seven.with_filenames.csv
-      sbt_outdir: "evol_distances/sbts"
-    alphabet:
-      protein:
-        ksizes: [5,6,7,9,11,13] #5,7
-        scaled: [1]
-      dayhoff:
-        ksizes: [5,6,7,8,9,11,12,13,15,17] #11,13
-        scaled: [1]
-      hp:
-        ksizes: [15,16,17,18,19,21,23,25] #[15,17,19,21]
-        scaled: [1]
-  evol_paths_first_seven_rna:
-    query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups_first_seven.with_rna_filenames.csv
-    use_existing_sbt: ""  # alternatively: use a prebuilt sbt, don't generate new one 
-    grow_sbt:
-      input_path: "/home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_protein_fna/*"
-      subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups_first_seven.with_rna_filenames.csv
-      sbt_outdir: "evol_distances/sbts"
-    alphabet:
-      nucleotide:
-        ksizes: [21,31,51]
-        scaled: [50,200,1000,2000]
-      translate_protein:
-        ksizes: [7] #[5,6,7,9,11,13] #5,7
-        scaled: [1]
-      translate_dayhoff:
-        ksizes: [5,6,7,8,9,11,12,13,15,17] #11,13
-        scaled: [1]
-      translate_hp:
-        ksizes: [15,16,17,18,19,21,23,25] #[15,17,19,21]
-        scaled: [1]
-  evol_paths_first_seven_dna:
-    query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups_first_seven.with_dna_filenames.csv
-    use_existing_sbt: ""  # alternatively: use a prebuilt sbt, don't generate new one 
-    grow_sbt:
-      input_path: /home/ctbrown/gtdbtk/release89/fastani/database 
-      subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups_first_seven.with_dna_filenames.csv
-      sbt_outdir: "evol_distances/sbts"
-    alphabet:
-      nucleotide:
-        ksizes: [21,31,51]
-        scaled: [50,200,1000,2000]
-      translate_protein:
-        ksizes: [5,6,7,9,11,13] #5,7
-        scaled: [1]
-      translate_dayhoff:
-        ksizes: [5,6,7,8,9,11,12,13,15,17] #11,13
-        scaled: [1]
-      translate_hp:
-        ksizes: [15,16,17,18,19,21,23,25] #[15,17,19,21]
-        scaled: [1]
-# grow full sbt:
-#gtdb_r89_faa:
-  #sbt:
-  #  input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
-  
-#gtdb_r89_fna:
-#  path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_protein_fna
-#gtdb_r89_dna:
-#  path: /home/ctbrown/gtdbtk/release89/fastani/database
+  evol_paths:
+      query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.with_filenames.csv
+      grow_sbt:
+        input_path: /home/ntpierce/2020-gtdb-smash/gtdb_faa_pathsonly
+        subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.with_filenames.csv
+        sbt_outdir: "evol_distances/sbts"
+        #input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+        #query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
+        #subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
+      alphabet:
+        protein:
+          ksizes: [7,9,11] #[5,7,9,11]
+          scaled: [1]
+        dayhoff:
+          ksizes: [11,12,13,15] #[9,11,13,15]
+          scaled: [1]
+        hp:
+          ksizes: [15,17,19] #,21,23,25] #[15,17,19,21]
+          scaled: [1]

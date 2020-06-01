@@ -164,7 +164,10 @@ def grow_sbt(args):
     input_files = args.input_files
     if args.input_is_directory:
         input_files = collect_input_files_from_dir(input_files[0], args.subset_csv, args.subset_info_colname)
-
+    ksize = args.ksize
+    alphabet = args.alphabet
+    if alphabet == "protein" or alphabet == "dayhoff" or alphabet == "hp":
+        ksize = ksize*3
     # create or load sbt
     sbt = create_sbt_or_load_existing(args.sbt, args.load_existing_sbt)
     # iterate through input files; add to sbt
@@ -174,7 +177,8 @@ def grow_sbt(args):
             sys.stderr.write(f"... loading {filename} file {n} of {len(input_files)}\n")
 
         # build or load signature from file
-        sig = load_or_generate_sig_from_file(filename, args.alphabet, args.ksize, args.scaled, args.ignore_abundance, args.translate)
+
+        sig = load_or_generate_sig_from_file(filename, alphabet, ksize, args.scaled, args.ignore_abundance, args.translate)
         # add to sbt
         if sig: # is this necessary?
             if sig.minhash:

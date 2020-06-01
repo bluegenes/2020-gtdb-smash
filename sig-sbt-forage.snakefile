@@ -114,9 +114,6 @@ def aggregate_sigs(w):
     input_type = sampleInfo[w.sample]["input_type"] # protein, dna, rna
     sigfile = os.path.join(compute_dir, input_type, f"{{acc}}_{w.alphabet}_scaled{w.scaled}_k{w.k}.sig")
     siglist=expand(sigfile, acc=sampleInfo[w.sample]["accessions"])
-    #accessions=path2acc[w.path]
-    #for acc in accessions:
-    #    siglist+=[os.path.join(compute_dir, w.moltype, f"{acc}_{w.encoding}_scaled{w.scaled}_k{w.k}.sig")]
     return siglist
 
 rule grow_sbt:
@@ -125,8 +122,6 @@ rule grow_sbt:
         sbt=os.path.join(index_dir,"{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.zip"),
     threads: 1
     params:
-        #input_dir= compute_dir  #lambda w: sampleInfo[w.sample]['grow_sbt']["input_path"],
-        #subset_info_colname=lambda w: sampleInfo[w.sample]['grow_sbt'].get('subset_info_colname', 'filename'),
         alpha= lambda w: w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet, # remove translate
         translate = lambda w: " --translate " if w.alphabet.startswith("translate") else "",
     resources:

@@ -24,28 +24,6 @@ dist_dir = os.path.join(out_dir, "distances")
 
 sbt_targets, query_targets=[],[]
 
-
-#for
-#for enc in nucleotide_encodings:
-    #nucleotide_targets += expand(os.path.join(compute_dir, "{encoding}", "{sample}_{encoding}_scaled{scaled}_k{k}.{ext}"), sample = genome_lineages, encoding=enc, scaled=encoding_info[enc]["scaled"], k=encoding_info[enc]["ksize"], ext=output_extensions)
-    #nucleotide_targets += expand(os.path.join(plots_dir, f"{enc}", "{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf"), encoding=enc, scaled=encoding_info[enc]["scaled"], k=encoding_info[enc]["ksize"], path = path2acc.keys())
-#    if translate: # just for kicks, translating dna seqs too
-#        for encoding in ["protein", "dayhoff", "hp"]:
-#            translate_targets+=expand(os.path.join(compute_dir, f"{enc}","{sample}_{encoding}_scaled{scaled}_k{k}.{ext}"), sample = genome_lineages, encoding=encoding, scaled=encoding_info[encoding]["scaled"], k=encoding_info[encoding]["ksize"], ext=output_extensions)
-#            translate_targets+= expand(os.path.join(plots_dir, f"{enc}", "{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf"), encoding=encoding, scaled=encoding_info[encoding]["scaled"],k=encoding_info[encoding]["ksize"], path = path2acc.keys())
-#if protein_input:
-#    for encoding in ["protein", "dayhoff", "hp"]:
-#        protein_targets+=expand(os.path.join(compute_dir,"protein","{sample}_{encoding}_scaled{scaled}_k{k}.{ext}"), sample = genome_lineages, encoding=encoding, scaled=encoding_info[encoding]["scaled"],k=encoding_info[encoding]["ksize"], ext=output_extensions)
-#        protein_targets+= expand(os.path.join(plots_dir, "protein", "{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf"), encoding=encoding, scaled=encoding_info[encoding]["scaled"],k=encoding_info[encoding]["ksize"], path = path2acc.keys())
-
-#output_targets = nucleotide_targets + protein_targets + translate_targets
-
-#def build_target(folder, samplelist, encoding_set, encoding_info, out_extensions):
-#    targets = []
-#    for enc in encodings:
-#        targets = expand(os.path.join(folder, enc, "{sample}_{encoding}_scaled{scaled}_k{k}.{ext}"), sample = samplelist, encoding=enc, scaled=encoding_info[enc]["scaled"],              k=encoding_info[enc]["ksize"], ext=out_extensions)
-#    return targets
-
 sampleInfo=config["foraging_samples"]
 accession2filenames = {}
 

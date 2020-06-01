@@ -1,0 +1,10 @@
+name: sklearn-env
+channels:
+  - conda-forge
+  - anaconda
+  - bioconda
+  - defaults
+dependencies:
+  - scikit-learn=0.23.1
+  - pandas=1.0.3
+  - jupyterlab

@@ -3,4 +3,4 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - sourmash==3.3
+  - sourmash==3.3.1

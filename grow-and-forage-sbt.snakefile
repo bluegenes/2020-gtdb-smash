@@ -59,7 +59,7 @@ rule grow_sbt:
         alpha= lambda w: w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet, # remove translate
         translate = lambda w: " --translate " if w.alphabet.startswith("translate") else "",
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *5000,
+        mem_mb=lambda wildcards, attempt: attempt *10000,
         runtime=6000,
     log: os.path.join(logs_dir, "grow-sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.grow.log")
     benchmark: os.path.join(logs_dir, "grow-sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.grow.benchmark")

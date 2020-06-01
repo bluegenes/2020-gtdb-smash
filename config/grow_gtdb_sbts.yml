@@ -4,7 +4,8 @@ out_dir: evol_distances
 
 foraging_samples:
 # grow full evol paths sbt:
-  evol_paths:
+  evol_paths_pep:
+      input_type: protein
       query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.with_filenames.csv
       grow_sbt:
         input_path: /home/ntpierce/2020-gtdb-smash/gtdb_faa_pathsonly
@@ -14,12 +15,12 @@ foraging_samples:
         #query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
         #subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
       alphabet:
-        protein:
-          ksizes: [7,9,11] #[5,7,9,11]
-          scaled: [1]
+        #protein:
+        #  ksizes: [5,7,9,11,13] #[5,7,9,11]
+        #  scaled: [1]
         dayhoff:
-          ksizes: [11,12,13,15] #[9,11,13,15]
+          ksizes: [19] #[13,15,17,19,21,23,25] #[11,12,13,15] #[9,11,13,15]
           scaled: [1]
-        hp:
-          ksizes: [15,17,19] #,21,23,25] #[15,17,19,21]
-          scaled: [1]
+        #hp:
+        #  ksizes: [21,23,25,27,29,31,33]
+        #  scaled: [1]

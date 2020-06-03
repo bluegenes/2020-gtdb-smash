@@ -135,7 +135,7 @@ rule grow_sbt:
     conda: "envs/forage-env.yml"
     shell:
         """
-        python scripts/grow-sbtmh.py {compute_dir}/{params.input_type}/*_{params.alpha}_scaled{wildcards.scaled}_k{params.ksize}.sig \
+        python scripts/grow-sbtmh.py {compute_dir}/{params.input_type}/*_{params.alpha}_scaled{wildcards.scaled}_k{wildcards.k}.sig \
         --sbt {output.sbt} --ksize {wildcards.k} --scaled {wildcards.scaled} --alphabet {params.alpha} {params.translate} 2> {log}
         """
 

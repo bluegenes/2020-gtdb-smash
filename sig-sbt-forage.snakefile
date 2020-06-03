@@ -49,9 +49,9 @@ rule all:
     input: sbt_targets + query_targets
 
 # for protein signatures, multipy by 3 if necessary before calculating signature (sourmash v3.x)
-ksize_multiplier = {"rna": 1, "dna": 1, "protein": 3, "dayhoff": 3, "hp":3, "translate_protein": 3, "translate_dayhoff": 3, "translate_hp": 3}
+ksize_multiplier = {"nucleotide": 1, "protein": 3, "dayhoff": 3, "hp":3, "translate_protein": 3, "translate_dayhoff": 3, "translate_hp": 3}
 # "rna" is not sourmash cli friendly
-moltype_map = {"rna": "dna", "dna": "dna", "protein":"protein", "dayhoff": "dayhoff", "hp":"hp", "translate_protein": "protein", "translate_dayhoff": "dayhoff", "translate_hp": "hp"}
+moltype_map = {"nucleotide": "dna", "protein":"protein", "dayhoff": "dayhoff", "hp":"hp", "translate_protein": "protein", "translate_dayhoff": "dayhoff", "translate_hp": "hp"}
 
 
 # compute sigs to general compute directory, regardles of the sbt sample name (so can reuse sigs for other sbts, if desired)
@@ -116,14 +116,17 @@ def aggregate_sigs(w):
     siglist=expand(sigfile, acc=sampleInfo[w.sample]["accessions"])
     return siglist
 
+
 rule grow_sbt:
-    input: aggregate_sigs
+    input: aggregate_sigs,
     output: 
         sbt=os.path.join(index_dir,"{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.zip"),
     threads: 1
     params:
         alpha= lambda w: w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet, # remove translate
         translate = lambda w: " --translate " if w.alphabet.startswith("translate") else "",
+        input_type = lambda w: sampleInfo[w.sample]["input_type"],
+        ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
     resources:
         mem_mb=lambda wildcards, attempt: attempt *50000,
         runtime=6000,
@@ -132,7 +135,8 @@ rule grow_sbt:
     conda: "envs/forage-env.yml"
     shell:
         """
-        python scripts/grow-sbtmh.py {input} --sbt {output.sbt} --ksize {wildcards.k} --scaled {wildcards.scaled} --alphabet {params.alpha} {params.translate} 2> {log}
+        python scripts/grow-sbtmh.py {compute_dir}/{params.input_type}/*_{params.alpha}_scaled{wildcards.scaled}_k{params.ksize}.sig \
+        --sbt {output.sbt} --ksize {wildcards.k} --scaled {wildcards.scaled} --alphabet {params.alpha} {params.translate} 2> {log}
         """
 
 def find_forage_inputs(w):

@@ -19,6 +19,17 @@
 
 #snakemake -s grow-and-forage-sbt.snakefile --configfile config/grow_gtdb_sbts.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 25 --nolock
 
-snakemake -s sig-sbt-forage.snakefile --configfile config/grow_gtdb_sbts.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 30
-#snakemake -s sig-sbt-forage.snakefile --configfile config/grow_gtdb_sbts.yml --profile default --nolock -n #--jobs 25
+#snakemake -s sig-sbt-forage.snakefile --configfile config/grow_gtdb_sbts.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 15
+#snakemake -s sig-sbt-forage.snakefile --configfile config/grow_gtdb_sbts.yml --profile default --nolock --jobs 1 #-n
+
+
+#snakemake -s sig-sbt-forage.snakefile --configfile config/grow_gtdb_sbts_rna_dna.yml --profile farm --cluster-config config/bml_clusterconfig.yml --jobs 20 --nolock
+#snakemake -s sig-sbt-forage.snakefile --configfile config/grow_gtdb_sbts.yml --profile farm --cluster-config config/bml_clusterconfig.yml --jobs 50
+
+#snakemake -s representative-index.snakefile --configfile config/representative-index.yml --profile default --jobs 1 #--nolock --restart-times 0 -n
+
+#snakemake -s representative-index.snakefile --configfile config/representative-index.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 1 -n #--nolock --restart-times 0 -n
+
+# set mem limit here so no more than one lca job runs at once
+snakemake -s build-representative-index.snakefile --configfile config/build-representative-index.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 15 --resources mem_mb=300000 #-n #--nolock --restart-times 0 -n
 

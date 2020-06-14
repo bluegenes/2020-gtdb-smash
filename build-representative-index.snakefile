@@ -11,10 +11,10 @@ output_extensions = ["sig"]
 output_targets, nucleotide_targets, translate_targets, protein_targets = [],[],[],[]
 
 out_dir = config["out_dir"]
+compute_dir = config["sigs_dir"]
 #data_dir= os.path.join(out_dir, "data")
 logs_dir = os.path.join(out_dir, "logs")
 envs_dir = "envs"
-compute_dir = os.path.join(out_dir, "compute")
 compare_dir = os.path.join(out_dir, "compare")
 
 index_dir = config.get(out_dir, "representative-index")
@@ -33,8 +33,9 @@ for sample, info in sampleInfo.items():
     # if want multiple samples, need to add here instead of overwriting
     sample_acc2file = pd.Series(info_csv.filename.values,index=info_csv.accession).to_dict()
     if input_type in accession2filenames.keys():
-        prev_values = accession2filesnames[input_type]
-        accession2filenames[input_type] = prev_values.update(sample_acc2file)
+        prev_values = accession2filenames[input_type]
+        prev_values.update(sample_acc2file)
+        accession2filenames[input_type] = prev_values
     else:
         accession2filenames[input_type] = sample_acc2file 
     # add accessions to sampleInfo dict
@@ -69,7 +70,7 @@ rule sourmash_compute_dna:
         track_abundance=True,
     threads: 1
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *3000,
+        mem_mb=lambda wildcards, attempt: attempt *1000,
         runtime=1200,
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.dna.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.dna.compute.benchmark")
@@ -87,7 +88,7 @@ rule sourmash_compute_protein:
         track_abundance=True,
     threads: 1
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *3000,
+        mem_mb=lambda wildcards, attempt: attempt *1000,
         runtime=1200,
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.protein.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.protein.compute.benchmark")
@@ -105,7 +106,7 @@ rule sourmash_compute_rna:
         track_abundance=True,
     threads: 1
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *3000,
+        mem_mb=lambda wildcards, attempt: attempt *1000,
         runtime=1200,
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.rna.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.rna.compute.benchmark")
@@ -115,7 +116,7 @@ rule sourmash_compute_rna:
 def aggregate_sigs(w):
     siglist=[]
     input_type = sampleInfo[w.sample]["input_type"] # protein, dna, rna
-    sigfile = os.path.join(compute_dir, input_type, f"{{acc}}_{w.alphabet}_scaled{w.scaled}_k{w.k}.sig")
+    sigfile = os.path.join(compute_dir, input_type, w.alphabet, f"k{w.k}", f"{{acc}}_{w.alphabet}_scaled{w.scaled}_k{w.k}.sig")
     siglist=expand(sigfile, acc=sampleInfo[w.sample]["accessions"])
     return siglist
 
@@ -159,7 +160,7 @@ rule index_lca:
         ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
         #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *200000,
+        mem_mb=lambda wildcards, attempt: attempt *300000,
         runtime=600000,
     log: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.log")
     benchmark: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.benchmark")

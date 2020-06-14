@@ -55,7 +55,9 @@ def main(args):
     # take nth row, here row 0 = first row. If expanding to later rows, watch out for Nans
     # do queryDF.groupby([rep_col].cumcount() to see order
     # https://pandas.pydata.org/pandas-docs/stable/user_guide/groupby.html
-    repDF = queryDF.groupby([rep_col], as_index=False).nth(0)
+    select_n = args.nth_to_select
+    repDF = queryDF.copy().groupby([rep_col], as_index=False).nth(select_n)
+    repDF.dropna(inplace=True)
 
     # reorder columns so it works for lca index
     repDF = repDF[final_column_order+ cols_to_add]
@@ -66,7 +68,9 @@ if __name__ == "__main__":
     p.add_argument("query_csv")
     p.add_argument("--output-csv")
     p.add_argument("--representative-rank", default="family", help="rank for which to select representative genomes")
+    p.add_argument("--nth-to-select", type=int, default=0, help="select nth genome as the 'representative': default=0 (select first)")
     args = p.parse_args()
     if not args.output_csv:
-        args.output_csv=(args.query_csv).rsplit(".", 1)[0] + f".representative-at-{args.representative_rank}.csv"
+        n = str(args.nth_to_select)
+        args.output_csv=(args.query_csv).rsplit(".", 1)[0] + f".n{n}th-representative-at-{args.representative_rank}.csv"
     sys.exit(main(args))

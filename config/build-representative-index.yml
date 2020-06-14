@@ -4,24 +4,24 @@ out_dir: gtdb-indices
 sigs_dir: gtdb-sigs
 
 representative_indices:
-#  gtdb_pep.rep_family:
-#    input_type: protein
-#    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
-#    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-family.csv
-#    gather_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n1th-representative-at-family.csv
-#    index_outdir: "index-gtdb"
-#    index_types:
-#        - lca
-#    alphabet:
-#      protein:
-#        ksizes: [7,9,11]
-#        scaled: [100]
-#      dayhoff:
-#        ksizes: [17,19,21,23,25]
-#        scaled: [100]
-#      hp:
-#        ksizes: [31,33,35]
-#        scaled: [100]
+  gtdb_pep.rep_family:
+    input_type: protein
+    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-family.csv
+    gather_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n1th-representative-at-family.csv
+    index_outdir: "index-gtdb"
+    index_types:
+        - lca
+    alphabet:
+      protein:
+        ksizes: [7] #[7,9,11]
+        scaled: [100]
+      dayhoff:
+        ksizes: [19] #[17,19,21,23,25]
+        scaled: [100]
+      hp:
+        ksizes: [33] #[31,33,35]
+        scaled: [100]
   gtdb_pep.rep_order:
     input_type: protein
     input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa

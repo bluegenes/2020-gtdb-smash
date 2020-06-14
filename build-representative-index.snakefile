@@ -63,11 +63,11 @@ for sample, info in sampleInfo.items():
         if "lca" in index_types:
             index_targets+=expand(os.path.join(index_dir,"lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
             if gather_accessions:
-                gather_targets+=expand(os.path.join(gather_dir, "{sample}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+                gather_targets+=expand(os.path.join(gather_dir, "{sample}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
         if "sbt" in index_types:
             index_targets+=expand(os.path.join(index_dir,"sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
             if gather_accessions:
-                gather_targets+=expand(os.path.join(gather_dir, "{sample}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+                gather_targets+=expand(os.path.join(gather_dir, "{sample}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
 
 
 
@@ -203,8 +203,9 @@ rule lca_gather:
         # maybe later expand this to multiple db's at once? would need to change targets, too.
         #dbs = lambda w: sampleInfo[w.sample]["databases"]["lca"].values()
     output:
-        csv = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.csv"),
-        unassigned = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.unassigned"),
+        csv = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.csv"),
+        matches = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.matches"),
+        unassigned = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.unassigned"),
     params:
         alpha= lambda w: (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
         alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
@@ -221,9 +222,13 @@ rule lca_gather:
     shell:
         # do we want abundance?? --ignore-abundance to turn off
         """
-        sourmash lca gather {input.query} {input.db} -o {output.csv} --output-unassigned {output.unassigned} 2> {log}
+        sourmash gather {input.query} {input.db} -o {output.csv} {params.alpha_cmd} \
+        --save-matches {output.matches} --threshold-bp=0  \
+        --output-unassigned {output.unassigned} \
+        --scaled {wildcards.scaled} -k {params.ksize} 2> {log}
         """
-        #--scaled {wildcards.scaled} -k {params.ksize}
+        #sourmash lca gather {input.query} {input.db} -o {output.csv} --output-unassigned {output.unassigned} 2> {log}
+        # --scaled {wildcards.scaled} --ksize {params.ksize}
 
 rule sbt_gather:
     input:
@@ -231,9 +236,9 @@ rule sbt_gather:
         db=os.path.join(index_dir, "sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip")
         # maybe later expand this to multiple db's at once? would need to change targets, too.
     output:
-        csv = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.csv"),
-        matches = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.matches"),
-        unassigned = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.unassigned"),
+        csv = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.csv"),
+        matches = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.matches"),
+        unassigned = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.unassigned"),
     params:
         alpha= lambda w: (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
         alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate

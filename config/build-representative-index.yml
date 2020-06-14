@@ -7,38 +7,57 @@ representative_indices:
 #  gtdb_pep.rep_family:
 #    input_type: protein
 #    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
-#    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.representative-at-family.csv
-#    index_outdir: "gtdb-sbts/sbts"
+#    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-family.csv
+#    gather_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n1th-representative-at-family.csv
+#    index_outdir: "index-gtdb"
 #    index_types:
 #        - lca
 #    alphabet:
 #      protein:
-#        ksizes: [7]
+#        ksizes: [7,9,11]
 #        scaled: [100]
 #      dayhoff:
-#        ksizes: [19]
+#        ksizes: [17,19,21,23,25]
 #        scaled: [100]
 #      hp:
-#        ksizes: [33]
+#        ksizes: [31,33,35]
 #        scaled: [100]
   gtdb_pep.rep_order:
     input_type: protein
     input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
-    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.representative-at-order.csv
-    index_outdir: "gtdb-sbts/sbts"
+    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-order.csv
+    gather_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n1th-representative-at-order.csv
+    index_outdir: "index-gtdb"
     index_types:
         - lca
     alphabet:
       protein:
-        ksizes: [7] 
+        ksizes: [7] #[7,9,11] 
         scaled: [100]
       dayhoff:
-        ksizes: [19] 
+        ksizes: [19] #[17,19,21,23,25] 
         scaled: [100]
       hp:
-        ksizes: [33]
+        ksizes: [33] #[31,33,35]
         scaled: [100]
-
+#  gtdb_pep.rep_genus:
+#    input_type: protein
+#    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+#    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-genus.csv
+#    gather_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n1th-representative-at-genus.csv
+#    index_outdir: "index-gtdb"
+#    index_types:
+#        - lca
+#    alphabet:
+#      protein:
+#        ksizes: [7,9,11]
+#        scaled: [100]
+#      dayhoff:
+#        ksizes: [17,19,21,23,25]
+#        scaled: [100]
+#      hp:
+#        ksizes: [31,33,35]
+#        scaled: [100]
 
 # grow full evol paths sbt:
 #  evol_paths_pep.rep_family:

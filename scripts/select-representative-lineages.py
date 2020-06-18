@@ -17,6 +17,7 @@ def split_lineages_to_columns(row, taxo_col):
         row["family"] = lineages[4].split("f__")[1]
         row["genus"] = lineages[5].split("g__")[1]
         row["species"] = lineages[6].split("s__")[1]
+        row["strain"] = ""
     else:
         row["superkingdom"] = lineages[0]
         row["phylum"] = lineages[1]
@@ -25,15 +26,15 @@ def split_lineages_to_columns(row, taxo_col):
         row["family"] = lineages[4]
         row["genus"] = lineages[5]
         row["species"] = lineages[6]
+        row["strain"] = ""
     return row
 
 
 def main(args):
     #read in csv
     queryDF= pd.read_csv(args.query_csv)
-
     # if this is an evol paths dataset, drop anchor species (confound analysis bc all genomes w/in a path are picked from them)
-    final_column_order = ["accession", "superkingdom", "phylum", "class", "order", "family", "genus", "species","filename"]
+    final_column_order = ["accession", "superkingdom", "phylum", "class", "order", "family", "genus", "species", "strain", "signame", "filename"]
     cols_to_add=[]
     if "rank" in queryDF.columns:
         queryDF = queryDF[queryDF["rank"] != "species"]
@@ -43,7 +44,8 @@ def main(args):
     if "lineage" in queryDF.columns:
         queryDF = queryDF.apply(split_lineages_to_columns, axis=1, args=(["lineage"]))
         cols_to_add+=["lineage"]
-
+    elif "strain" not in queryDF.columns:
+        queryDF["strain"] = ""
     # now select representatives at the chosen level
     rep_col = args.representative_rank.lower()
     if rep_col not in queryDF.columns:
@@ -59,6 +61,10 @@ def main(args):
     repDF = queryDF.copy().groupby([rep_col], as_index=False).nth(select_n)
     repDF.dropna(inplace=True)
 
+    # add full filepath to filename
+    #repDF["filepath"] = repDF["filename"].apply(lambda x: os.path.join(args.fasta_path, x)) #, axis=1)
+    repDF["signame"] = repDF["accession"] + " " + repDF["species"]
+
     # reorder columns so it works for lca index
     repDF = repDF[final_column_order+ cols_to_add]
     repDF.to_csv(args.output_csv, index=False)
@@ -67,10 +73,15 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("query_csv")
     p.add_argument("--output-csv")
+    p.add_argument("--fasta-path", default="/home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa", help="directory to find fasta files")
     p.add_argument("--representative-rank", default="family", help="rank for which to select representative genomes")
     p.add_argument("--nth-to-select", type=int, default=0, help="select nth genome as the 'representative': default=0 (select first)")
+    p.add_argument("--keep-all", action="store_true", help="keep all genomes")
     args = p.parse_args()
     if not args.output_csv:
-        n = str(args.nth_to_select)
-        args.output_csv=(args.query_csv).rsplit(".", 1)[0] + f".n{n}th-representative-at-{args.representative_rank}.csv"
+        if args.keep_all:
+            args.output_csv=(args.query_csv).rsplit(".", 1)[0] + f".with-signames.csv"
+        else:
+            n = str(args.nth_to_select)
+            args.output_csv=(args.query_csv).rsplit(".", 1)[0] + f".n{n}th-representative-at-{args.representative_rank}.csv"
     sys.exit(main(args))

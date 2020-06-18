@@ -6,6 +6,7 @@ Run: snakemake -s gtdb-smash.snakefile --use-conda
 import os
 import glob
 import pandas as pd
+from collections import defaultdict
 
 output_extensions = ["sig"]
 output_targets, nucleotide_targets, translate_targets, protein_targets = [],[],[],[]
@@ -23,7 +24,15 @@ gather_dir = os.path.join(out_dir, "gather")
 index_targets, gather_targets=[],[]
 
 sampleInfo=config["representative_indices"]
-accession2filenames = {}
+accession2filenames = defaultdict(dict)
+accession2signame = defaultdict(dict)
+
+#def make_sigfilename(filename):
+# from https://github.com/dib-lab/sourmash_databases/blob/master/Snakefile
+#    genomefile = os.path.basename(filename)
+#    sigfile = os.path.join(sigs_output_location, genomefile) + '.sig'
+#    return sigfile
+
 
 for sample, info in sampleInfo.items():    
     info_csv = pd.read_csv(info["info_csv"])
@@ -33,12 +42,9 @@ for sample, info in sampleInfo.items():
     input_type = info["input_type"] #protein, dna, rna
     # if want multiple samples, need to add here instead of overwriting
     sample_acc2file = pd.Series(info_csv.filename.values,index=info_csv.accession).to_dict()
-    if input_type in accession2filenames.keys():
-        prev_values = accession2filenames[input_type]
-        prev_values.update(sample_acc2file)
-        accession2filenames[input_type] = prev_values
-    else:
-        accession2filenames[input_type] = sample_acc2file 
+    acc2signame = pd.Series(info_csv.signame.values,index=info_csv.accession).to_dict()
+    accession2filenames[input_type].update(sample_acc2file)
+    accession2signame.update(acc2signame)
     # add accessions to sampleInfo dict
     sampleInfo[sample]["accessions"] = info_csv.accession.to_list()
     # get index info
@@ -51,25 +57,23 @@ for sample, info in sampleInfo.items():
         # this assumes they're in same input dir & are same input type as the samples above. ok for now. shrug.
         gather_csv["filename"] = gather_csv["filename"].apply(lambda x: os.path.join(fasta_dir, x))
         gather_acc2file = pd.Series(gather_csv.filename.values,index=gather_csv.accession).to_dict()
+        gather2signame = pd.Series(gather_csv.signame.values,index=gather_csv.accession).to_dict()
         # add accession:: filenames to main acc2filename dict
-        prev_values = accession2filenames[input_type]
-        prev_values.update(gather_acc2file)
-        accession2filenames[input_type] = prev_values
+        accession2filenames[input_type].update(gather_acc2file)
+        accession2signame.update(gather2signame)
         # create "gather_accessions" list
         gather_accessions = gather_csv.accession.to_list()
-    sampleInfo[sample]["gather_accessions"] = gather_accessions
+    #sampleInfo[sample]["gather_accessions"] = gather_accessions
     # build targets
     for alpha, alphainfo in info["alphabet"].items():
         if "lca" in index_types:
-            index_targets+=expand(os.path.join(index_dir,"lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+            index_targets+=expand(os.path.join(index_dir,"lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json.gz"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
             if gather_accessions:
-                gather_targets+=expand(os.path.join(gather_dir, "{sample}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+                gather_targets+=expand(os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
         if "sbt" in index_types:
             index_targets+=expand(os.path.join(index_dir,"sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
             if gather_accessions:
-                gather_targets+=expand(os.path.join(gather_dir, "{sample}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
-
-
+                gather_targets+=expand(os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
 
 rule all:
     input: index_targets + gather_targets
@@ -104,10 +108,15 @@ rule sourmash_compute_protein:
     output: os.path.join(compute_dir, "protein", "{alphabet}", "k{k}", "{accession}_{alphabet}_scaled{scaled}_k{k}.sig")
     params:
         k= lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
-        scaled= lambda w: w.scaled,
-        compute_moltypes= lambda w: moltype_map[w.alphabet],
-        input_is_protein=True,
-        track_abundance=True,
+        alpha_cmd = lambda w: "--" + moltype_map[w.alphabet],
+        signame = lambda w: accession2signame[w.accession],
+        abund_cmd = "--track-abundance",
+        #signame_cmd = lambda w: f"--merge={accession2signame[w.accession]}",
+        #scaled= lambda w: w.scaled,
+        #compute_moltypes= lambda w: moltype_map[w.alphabet],
+        #input_is_protein=True,
+        #track_abundance=True,
+        #signame = lambda wildcards: lookup_name(wildcards.filename),
     threads: 1
     resources:
         mem_mb=lambda wildcards, attempt: attempt *1000,
@@ -115,7 +124,13 @@ rule sourmash_compute_protein:
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.protein.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.protein.compute.benchmark")
     conda: "envs/sourmash3.3.yml"
-    script: "scripts/sourmash-compute.wrapper.py"
+    shell:
+        """
+        sourmash compute -k {params.k} --scaled={wildcards.scaled} --input-is-protein \
+        {input} -o {output} {params.alpha_cmd} {params.abund_cmd} --merge={params.signame:q} 2> {log}
+        """
+        #{input} -o {output} {params.alpha_cmd} {params.abund_cmd} {params.signame_cmd} 2> {log}
+    #script: "scripts/sourmash-compute.wrapper.py"
 
 rule sourmash_compute_rna:
     input: lambda w: accession2filenames["rna"][w.accession]
@@ -134,6 +149,7 @@ rule sourmash_compute_rna:
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.rna.compute.benchmark")
     conda: "envs/sourmash3.3.yml"
     script: "scripts/sourmash-compute.wrapper.py"
+        #sourmash compute {moltype_cmd} {abund_cmd} --scaled {scaled} -k {k} {snakemake.input} -o {snakemake.output} -p {snakemake.threads} {extra} {log}
 
 def aggregate_sigs(w):
     siglist=[]
@@ -144,7 +160,7 @@ def aggregate_sigs(w):
 
 
 rule index_sbt:
-    input: aggregate_sigs,
+    input: sigs=aggregate_sigs,
     output: 
         sbt=os.path.join(index_dir, "sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip"),
     threads: 1
@@ -162,17 +178,17 @@ rule index_sbt:
     conda: "envs/forage-env.yml"
     shell:
         """
-        sourmash index --ksize {params.ksize} --scaled {wildcards.scaled} {params.alpha_cmd}  \
-        {output.sbt} {compute_dir}/{params.input_type}/{wildcards.alphabet}/k{wildcards.k}/*_{params.alpha}_scaled{wildcards.scaled}_k{wildcards.k}.sig  2> {log}
+        sourmash index --ksize {params.ksize} --scaled {wildcards.scaled} {params.alpha_cmd} {output.sbt} \
+        {input.sigs} 2> {log}
         """
+        #{output.sbt} {compute_dir}/{params.input_type}/{wildcards.alphabet}/k{wildcards.k}/*_{params.alpha}_scaled{wildcards.scaled}_k{wildcards.k}.sig  2> {log}
 
 rule index_lca:
     input: 
         sigs=aggregate_sigs,
         taxonomy= lambda w: sampleInfo[w.sample]["info_csv"]
     output:
-        lca=os.path.join(index_dir,"lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json"),
-        report= os.path.join(index_dir,"lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.report"),
+        os.path.join(index_dir,"lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json.gz"),
     threads: 1
     params:
         alpha= lambda w: (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
@@ -180,32 +196,37 @@ rule index_lca:
         translate = lambda w: " --translate " if w.alphabet.startswith("translate") else "",
         input_type = lambda w: sampleInfo[w.sample]["input_type"],
         ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
+        report= lambda w: os.path.join(index_dir,"lca", f"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index.lca.report"),
         #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *300000,
+        mem_mb=lambda wildcards, attempt: attempt *30000,
         runtime=600000,
     log: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.log")
     benchmark: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.benchmark")
     conda: "envs/sourmash-dev.yml"
     shell:
         """
-        sourmash lca index --ksize {params.ksize} --scaled {wildcards.scaled} --report {output.report} \
-        {params.alpha_cmd} {input.taxonomy} {output.lca} \
-        {compute_dir}/{params.input_type}/{wildcards.alphabet}/k{wildcards.k}/*_{params.alpha}_scaled{wildcards.scaled}_k{wildcards.k}.sig  2> {log}
+        sourmash lca index --ksize {params.ksize} --scaled {wildcards.scaled} \
+        --require-taxonomy --split-identifiers \
+        --report {params.report} \
+        {params.alpha_cmd} {input.taxonomy} {output} \
+        {input.sigs} 2> {log}
         """
+        #touch  {output.report}
+        #{compute_dir}/{params.input_type}/{wildcards.alphabet}/k{wildcards.k}/*_{params.alpha}_scaled{wildcards.scaled}_k{wildcards.k}.sig  2> {log}
 
 ## gather rules
 
 rule lca_gather:
     input:
         query = lambda w: os.path.join(compute_dir, sampleInfo[w.sample]["input_type"], w.alphabet, f"k{w.k}", f"{w.accession}_{w.alphabet}_scaled{w.scaled}_k{w.k}.sig"),
-        db=os.path.join(index_dir, "lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json")
+        db=os.path.join(index_dir, "lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json.gz")
         # maybe later expand this to multiple db's at once? would need to change targets, too.
         #dbs = lambda w: sampleInfo[w.sample]["databases"]["lca"].values()
     output:
-        csv = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.csv"),
-        matches = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.matches"),
-        unassigned = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.unassigned"),
+        csv = os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.csv"),
+        matches = os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.matches"),
+        unassigned = os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.unassigned"),
     params:
         alpha= lambda w: (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
         alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
@@ -214,13 +235,14 @@ rule lca_gather:
         ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
         #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *10000,
+        mem_mb=lambda wildcards, attempt: attempt *3000,
         runtime=600000,
-    log: os.path.join(logs_dir, "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.log")
-    benchmark: os.path.join(logs_dir, "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.benchmark")
+    log: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.log")
+    benchmark: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.benchmark")
     conda: "envs/sourmash-dev.yml"
     shell:
         # do we want abundance?? --ignore-abundance to turn off
+        # --ignore-abundance \
         """
         sourmash gather {input.query} {input.db} -o {output.csv} {params.alpha_cmd} \
         --save-matches {output.matches} --threshold-bp=0  \
@@ -236,9 +258,9 @@ rule sbt_gather:
         db=os.path.join(index_dir, "sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip")
         # maybe later expand this to multiple db's at once? would need to change targets, too.
     output:
-        csv = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.csv"),
-        matches = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.matches"),
-        unassigned = os.path.join(gather_dir, "{sample}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.unassigned"),
+        csv = os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.csv"),
+        matches = os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.matches"),
+        unassigned = os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.unassigned"),
     params:
         alpha= lambda w: (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
         alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
@@ -249,8 +271,8 @@ rule sbt_gather:
     resources:
         mem_mb=lambda wildcards, attempt: attempt *10000,
         runtime=600000,
-    log: os.path.join(logs_dir, "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.log")
-    benchmark: os.path.join(logs_dir, "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.benchmark")
+    log: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.log")
+    benchmark: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.benchmark")
     conda: "envs/sourmash-dev.yml"
     shell:
         # do we want abundance?? --ignore-abundance to turn off

@@ -57,9 +57,12 @@ def main(args):
     # take nth row, here row 0 = first row. If expanding to later rows, watch out for Nans
     # do queryDF.groupby([rep_col].cumcount() to see order
     # https://pandas.pydata.org/pandas-docs/stable/user_guide/groupby.html
-    select_n = args.nth_to_select
-    repDF = queryDF.copy().groupby([rep_col], as_index=False).nth(select_n)
-    repDF.dropna(inplace=True)
+    if not args.keep_all:
+        select_n = args.nth_to_select
+        repDF = queryDF.copy().groupby([rep_col], as_index=False).nth(select_n)
+        repDF.dropna(inplace=True)
+    else:
+        repDF = queryDF.copy()
 
     # add full filepath to filename
     #repDF["filepath"] = repDF["filename"].apply(lambda x: os.path.join(args.fasta_path, x)) #, axis=1)

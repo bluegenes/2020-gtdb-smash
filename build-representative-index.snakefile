@@ -70,6 +70,7 @@ for sample, info in sampleInfo.items():
             index_targets+=expand(os.path.join(index_dir,"lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json.gz"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
             if gather_accessions:
                 gather_targets+=expand(os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+                gather_targets+=expand(os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
         if "sbt" in index_types:
             index_targets+=expand(os.path.join(index_dir,"sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
             if gather_accessions:
@@ -171,7 +172,7 @@ rule index_sbt:
         input_type = lambda w: sampleInfo[w.sample]["input_type"],
         ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *50000,
+        mem_mb=lambda wildcards, attempt: attempt *5000,
         runtime=6000,
     log: os.path.join(logs_dir, "index-sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-sbt.log")
     benchmark: os.path.join(logs_dir, "index-sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-sbt.benchmark")
@@ -199,25 +200,26 @@ rule index_lca:
         report= lambda w: os.path.join(index_dir,"lca", f"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index.lca.report"),
         #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *30000,
-        runtime=600000,
+        mem_mb= lambda wildcards, attempt: attempt *10000,
+        runtime=600,
     log: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.log")
     benchmark: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.benchmark")
     conda: "envs/sourmash-dev.yml"
     shell:
         """
         sourmash lca index --ksize {params.ksize} --scaled {wildcards.scaled} \
-        --require-taxonomy --split-identifiers \
+        --split-identifiers \
+        --require-taxonomy \
         --report {params.report} \
         {params.alpha_cmd} {input.taxonomy} {output} \
-        {input.sigs} 2> {log}
+        {input.sigs} 2> {log} 
         """
         #touch  {output.report}
         #{compute_dir}/{params.input_type}/{wildcards.alphabet}/k{wildcards.k}/*_{params.alpha}_scaled{wildcards.scaled}_k{wildcards.k}.sig  2> {log}
 
 ## gather rules
 
-rule lca_gather:
+rule gather_lca:
     input:
         query = lambda w: os.path.join(compute_dir, sampleInfo[w.sample]["input_type"], w.alphabet, f"k{w.k}", f"{w.accession}_{w.alphabet}_scaled{w.scaled}_k{w.k}.sig"),
         db=os.path.join(index_dir, "lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json.gz")
@@ -236,7 +238,7 @@ rule lca_gather:
         #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
     resources:
         mem_mb=lambda wildcards, attempt: attempt *3000,
-        runtime=600000,
+        runtime=600,
     log: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.log")
     benchmark: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.benchmark")
     conda: "envs/sourmash-dev.yml"
@@ -252,7 +254,7 @@ rule lca_gather:
         #sourmash lca gather {input.query} {input.db} -o {output.csv} --output-unassigned {output.unassigned} 2> {log}
         # --scaled {wildcards.scaled} --ksize {params.ksize}
 
-rule sbt_gather:
+rule gather_sbt:
     input:
         query = lambda w: os.path.join(compute_dir, sampleInfo[w.sample]["input_type"], w.alphabet, f"k{w.k}", f"{w.accession}_{w.alphabet}_scaled{w.scaled}_k{w.k}.sig"),
         db=os.path.join(index_dir, "sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip")
@@ -269,7 +271,7 @@ rule sbt_gather:
         ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
         #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *10000,
+        mem_mb=lambda wildcards, attempt: attempt *5000,
         runtime=600000,
     log: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.log")
     benchmark: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.benchmark")
@@ -281,4 +283,19 @@ rule sbt_gather:
         --save-matches {output.matches} --threshold-bp=0  \
         --output-unassigned {output.unassigned} \
         --scaled {wildcards.scaled} -k {params.ksize} 2> {log}
+        """
+
+rule gather_to_tax:
+    input:
+        gather_csv = rules.gather_lca.output.csv,
+        lineages_csv = lambda w: sampleInfo[w.sample]["info_csv"]
+    output:
+        gather_tax = os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.gather_summary.csv"),
+        top_matches = os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.csv"),
+    log: os.path.join(logs_dir, "gather_to_tax", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.gather_to_tax.log")
+    benchmark: os.path.join(logs_dir, "gather_to_tax", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.gather_to_tax.benchmark")
+    conda: "envs/sourmash-dev.yml"
+    shell:
+        """
+        python scripts/gather-to-tax.py {input.gather_csv} {input.lineages_csv} --tophits-csv {output.top_matches} > {output.gather_tax} 2> {log}
         """

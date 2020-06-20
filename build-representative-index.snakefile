@@ -91,10 +91,9 @@ rule sourmash_compute_dna:
     output: os.path.join(compute_dir, "dna", "{alphabet}", "k{k}", "{accession}_{alphabet}_scaled{scaled}_k{k}.sig")
     params:
         k= lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
-        scaled= lambda w: w.scaled,
-        compute_moltypes= lambda w: moltype_map[w.alphabet],
-        input_is_protein=False,
-        track_abundance=True,
+        alpha_cmd = lambda w: "--" + moltype_map[w.alphabet],
+        signame = lambda w: accession2signame[w.accession],
+        abund_cmd = "--track-abundance",
     threads: 1
     resources:
         mem_mb=lambda wildcards, attempt: attempt *1000,
@@ -102,7 +101,11 @@ rule sourmash_compute_dna:
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.dna.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.dna.compute.benchmark")
     conda: "envs/sourmash3.3.yml"
-    script: "scripts/sourmash-compute.wrapper.py"
+    shell:
+        """
+        sourmash compute -k {params.k} --scaled={wildcards.scaled}  \
+        {input} -o {output} {params.alpha_cmd} {params.abund_cmd} --merge={params.signame:q} 2> {log}
+        """
 
 rule sourmash_compute_protein:
     input: lambda w: accession2filenames["protein"][w.accession]
@@ -138,10 +141,9 @@ rule sourmash_compute_rna:
     output: os.path.join(compute_dir, "rna", "{alphabet}", "k{k}", "{accession}_{alphabet}_scaled{scaled}_k{k}.sig")
     params:
         k= lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
-        scaled= lambda w: w.scaled,
-        compute_moltypes= lambda w: moltype_map[w.alphabet],
-        input_is_protein=False,
-        track_abundance=True,
+        alpha_cmd = lambda w: "--" + moltype_map[w.alphabet],
+        signame = lambda w: accession2signame[w.accession],
+        abund_cmd = "--track-abundance",
     threads: 1
     resources:
         mem_mb=lambda wildcards, attempt: attempt *1000,
@@ -149,7 +151,12 @@ rule sourmash_compute_rna:
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.rna.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.rna.compute.benchmark")
     conda: "envs/sourmash3.3.yml"
-    script: "scripts/sourmash-compute.wrapper.py"
+    shell:
+        """
+        sourmash compute -k {params.k} --scaled={wildcards.scaled}  \
+        {input} -o {output} {params.alpha_cmd} {params.abund_cmd} --merge={params.signame:q} 2> {log}
+        """
+    #script: "scripts/sourmash-compute.wrapper.py"
         #sourmash compute {moltype_cmd} {abund_cmd} --scaled {scaled} -k {k} {snakemake.input} -o {snakemake.output} -p {snakemake.threads} {extra} {log}
 
 def aggregate_sigs(w):
@@ -167,10 +174,12 @@ rule index_sbt:
     threads: 1
     params:
         alpha= lambda w: w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet, # remove translate
-        alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
+        #alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
+        alpha_cmd = lambda w: "--" + moltype_map[w.alphabet],
         translate = lambda w: " --translate " if w.alphabet.startswith("translate") else "",
         input_type = lambda w: sampleInfo[w.sample]["input_type"],
         ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
+        sigdir= lambda w: os.path.join(compute_dir, sampleInfo[w.sample]["input_type"], w.alphabet, f"k{w.k}")
     resources:
         mem_mb=lambda wildcards, attempt: attempt *5000,
         runtime=6000,
@@ -193,26 +202,31 @@ rule index_lca:
     threads: 1
     params:
         alpha= lambda w: (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
-        alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
+        #alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
+        alpha_cmd= lambda w: "--" + moltype_map[w.alphabet],
         translate = lambda w: " --translate " if w.alphabet.startswith("translate") else "",
         input_type = lambda w: sampleInfo[w.sample]["input_type"],
         ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
         report= lambda w: os.path.join(index_dir,"lca", f"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index.lca.report"),
         #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
+        sigdir= lambda w: os.path.join(compute_dir, sampleInfo[w.sample]["input_type"], w.alphabet, f"k{w.k}")
     resources:
-        mem_mb= lambda wildcards, attempt: attempt *10000,
+        mem_mb= lambda wildcards, attempt: attempt *100000,
         runtime=600,
     log: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.log")
     benchmark: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.benchmark")
     conda: "envs/sourmash-dev.yml"
     shell:
         """
-        sourmash lca index --ksize {params.ksize} --scaled {wildcards.scaled} \
-        --split-identifiers \
-        --require-taxonomy \
-        --report {params.report} \
-        {params.alpha_cmd} {input.taxonomy} {output} \
-        {input.sigs} 2> {log} 
+        sourmash lca index \
+          --ksize {params.ksize} \
+          --scaled {wildcards.scaled} \
+          --split-identifiers \
+          --require-taxonomy \
+          --traverse-directory \
+          --report {params.report} \
+          {params.alpha_cmd} {input.taxonomy} {output} \
+          {params.sigdir} 2> {log} 
         """
         #touch  {output.report}
         #{compute_dir}/{params.input_type}/{wildcards.alphabet}/k{wildcards.k}/*_{params.alpha}_scaled{wildcards.scaled}_k{wildcards.k}.sig  2> {log}
@@ -231,28 +245,26 @@ rule gather_lca:
         unassigned = os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.unassigned"),
     params:
         alpha= lambda w: (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
-        alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
+        #alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
+        alpha_cmd = lambda w: "--" + moltype_map[w.alphabet],
         translate = lambda w: " --translate " if w.alphabet.startswith("translate") else "",
         input_type = lambda w: sampleInfo[w.sample]["input_type"],
         ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
         #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *3000,
+        mem_mb=lambda wildcards, attempt: attempt *10000,
         runtime=600,
     log: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.log")
     benchmark: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.benchmark")
     conda: "envs/sourmash-dev.yml"
     shell:
         # do we want abundance?? --ignore-abundance to turn off
-        # --ignore-abundance \
         """
         sourmash gather {input.query} {input.db} -o {output.csv} {params.alpha_cmd} \
         --save-matches {output.matches} --threshold-bp=0  \
         --output-unassigned {output.unassigned} \
         --scaled {wildcards.scaled} -k {params.ksize} 2> {log}
         """
-        #sourmash lca gather {input.query} {input.db} -o {output.csv} --output-unassigned {output.unassigned} 2> {log}
-        # --scaled {wildcards.scaled} --ksize {params.ksize}
 
 rule gather_sbt:
     input:
@@ -265,7 +277,8 @@ rule gather_sbt:
         unassigned = os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt.gather.unassigned"),
     params:
         alpha= lambda w: (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
-        alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
+        alpha_cmd = lambda w: "--" + moltype_map[w.alphabet],
+        #alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
         translate = lambda w: " --translate " if w.alphabet.startswith("translate") else "",
         input_type = lambda w: sampleInfo[w.sample]["input_type"],
         ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
@@ -294,6 +307,9 @@ rule gather_to_tax:
         top_matches = os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.csv"),
     log: os.path.join(logs_dir, "gather_to_tax", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.gather_to_tax.log")
     benchmark: os.path.join(logs_dir, "gather_to_tax", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.gather_to_tax.benchmark")
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt *3000,
+        runtime=600,
     conda: "envs/sourmash-dev.yml"
     shell:
         """

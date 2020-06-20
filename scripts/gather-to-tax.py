@@ -57,11 +57,14 @@ def summarize_gather_at(rank, tax_assign, gather_results):
     items.sort(key = lambda x: -x[1])
     # get tophit
     tophit = [items[0]]
+    secondhit=[]
+    if len(items) >1:
+        secondhit = [items[1]]
 
     for k, v in items:
         print(rank, f'{v:.3f}', sourmash.lca.display_lineage(k))
 
-    return tophit
+    return tophit #, secondhit
 
 
 def main():
@@ -100,21 +103,30 @@ def main():
     assert n_missed == 0
 
     tophits = []
+    #secondhits = []
+    ranklist = []
     for rank in sourmash.lca.taxlist(include_strain=False):
+        ranklist.append(rank)
+        #tophit, secondhit = summarize_gather_at(rank, tax_assign, gather_results)
         tophit = summarize_gather_at(rank, tax_assign, gather_results)
-        tophits.append([rank, tophit])
+        #tophits.append([rank, tophit])
+        tophits.append(tophit)
+        #secondhits.append(secondhit)
         if rank == args.stop_rank:
             break
         # now print csv of tophits
     tophit_file = args.tophits_csv
     if tophit_file:
         with open(tophit_file, "w") as out:
-            for rank, match in tophits:
-                for k, v in match:
-                    #each column (superk, phyl etc)--> % full_lineage, % full_lineage, % full_lineage
-                    out.write(f'{v:.3f}' + " " +sourmash.lca.display_lineage(k) + ",")
-                    #print(rank, f'{v:.3f}', sourmash.lca.display_lineage(k))
-            out.write("\n")
+            # write header
+            out.write(",".join(ranklist) + "\n")
+            for hitlist in [tophits]: #, secondhits]:
+                for match in hitlist:
+                    for k, v in match:
+                        #each column (superk, phyl etc)--> % full_lineage, % full_lineage, % full_lineage
+                        out.write(f'{v:.3f}' + " " +sourmash.lca.display_lineage(k) + ",")
+                        #print(rank, f'{v:.3f}', sourmash.lca.display_lineage(k))
+                out.write("\n")
 
 
 if __name__ == '__main__':

@@ -63,7 +63,7 @@ for sample, info in sampleInfo.items():
         accession2signame.update(gather2signame)
         # create "gather_accessions" list
         gather_accessions = gather_csv.accession.to_list()
-    #sampleInfo[sample]["gather_accessions"] = gather_accessions
+    sampleInfo[sample]["gather_accessions"] = gather_accessions
     # build targets
     for alpha, alphainfo in info["alphabet"].items():
         if "lca" in index_types:
@@ -71,6 +71,7 @@ for sample, info in sampleInfo.items():
             if gather_accessions:
                 gather_targets+=expand(os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca.gather.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
                 gather_targets+=expand(os.path.join(gather_dir, "{sample}", "{alphabet}", "k{k}", "{acc}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.csv"), acc=gather_accessions, sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+                gather_targets+=expand(os.path.join(gather_dir, "gather_tophits","{sample}","{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.summary.csv"), sample=sample, alphabet=alpha,scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
         if "sbt" in index_types:
             index_targets+=expand(os.path.join(index_dir,"sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
             if gather_accessions:
@@ -314,4 +315,18 @@ rule gather_to_tax:
     shell:
         """
         python scripts/gather-to-tax.py {input.gather_csv} {input.lineages_csv} --tophits-csv {output.top_matches} > {output.gather_tax} 2> {log}
+        """
+rule aggregate_gather_to_tax:
+    # make spreadsheet: each proteome:: top lineage hit
+    input:
+        gather_tophits= lambda w: expand(os.path.join(gather_dir, "{{sample}}/{{alphabet}}/k{{k}}/{acc}_x_{{sample}}.{{alphabet}}_scaled{{scaled}}_k{{k}}.gather_tophits.csv"), acc=sampleInfo[w.        sample]["gather_accessions"]),
+        true_lineages=lambda w: sampleInfo[w.sample]["gather_csv"]
+    output:
+         summary_csv=os.path.join(gather_dir, "gather_tophits", "{sample}", "{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.summary.csv"),
+    log: os.path.join(logs_dir, "gather_tophits", "{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.log")
+    benchmark: os.path.join(logs_dir, "gather_tophits", "{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.benchmark")
+    conda: "envs/forage-env.yml"
+    shell:
+        """
+        python scripts/aggregate-gather-to-tax-tophits.py --true-lineages-csv {input.true_lineages} --output-csv {output} {input.gather_tophits} 2> {log}
         """

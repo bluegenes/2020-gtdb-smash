@@ -314,7 +314,7 @@ rule gather_to_tax:
     conda: "envs/sourmash-dev.yml"
     shell:
         """
-        python scripts/gather-to-tax.py {input.gather_csv} {input.lineages_csv} --tophits-csv {output.top_matches} > {output.gather_tax} 2> {log}
+        python scripts/gather-to-tax {input.gather_csv} {input.lineages_csv} --tophits-csv {output.top_matches} > {output.gather_tax} 2> {log}
         """
 rule aggregate_gather_to_tax:
     # make spreadsheet: each proteome:: top lineage hit
@@ -323,10 +323,12 @@ rule aggregate_gather_to_tax:
         true_lineages=lambda w: sampleInfo[w.sample]["gather_csv"]
     output:
          summary_csv=os.path.join(gather_dir, "gather_tophits", "{sample}", "{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.summary.csv"),
+    params:
+        gather_dir= lambda w: os.path.join(gather_dir, w.sample, w.alphabet, f"k{w.k}")
     log: os.path.join(logs_dir, "gather_tophits", "{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.log")
     benchmark: os.path.join(logs_dir, "gather_tophits", "{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.benchmark")
     conda: "envs/forage-env.yml"
     shell:
         """
-        python scripts/aggregate-gather-to-tax-tophits.py --true-lineages-csv {input.true_lineages} --output-csv {output} {input.gather_tophits} 2> {log}
+        python scripts/aggregate-gather-to-tax-tophits.py --input-is-directory --true-lineages-csv {input.true_lineages} --output-csv {output} {params.gather_dir} 2> {log}
         """

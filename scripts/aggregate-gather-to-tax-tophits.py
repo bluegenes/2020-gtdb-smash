@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 import argparse
 import numpy as np
 import pandas as pd
@@ -32,9 +33,38 @@ def assess_gather_lineage_at_rank(row):
         row["lineage_match"] = "incorrect lineage"
     return row
 
+
+def collect_input_files_from_dir(input_dir, subset_csv=None, subset_info_colname="accession"):
+    """
+    Scan a directory for input fasta or signature files.
+    If subset_csv is provided, glob the directory for the pattern provided in the
+    subset_info_colname column.
+    """
+    input_files=[]
+    if subset_csv:
+        try:
+            match_strings = set(pd.read_csv(subset_csv)[subset_info_colname].tolist())
+            for m in match_strings:
+                input_files+=glob.glob(os.path.join(input_dir, f"*{m}*.gather_tophits.csv"))
+        except:
+            sys.stderr.write(f"can't collect input files from dir {input_dir} using subset_csv {subset_csv} column {subset_info_colname}")
+            sys.exit()
+    else:
+        input_files = [os.path.join(input_dir, f) for f in os.listdir(input_dir) if ".gather_tophits.csv" in f]
+    if not input_files:
+        sys.stderr.write(f"can't collect input files from dir {input_dir}")
+        sys.exit()
+    return input_files
+
+
+
 def main(args):
     #read in csv input files
-    genome2gathertophits = pd.concat([pd.read_csv(csv).assign(accession=os.path.basename(csv).rsplit("_x_")[0]) for csv in args.input_files])
+    input_files = args.input_files
+    if args.input_is_directory:
+        input_files = collect_input_files_from_dir(input_files[0], args.true_lineages_csv)
+
+    genome2gathertophits = pd.concat([pd.read_csv(csv).assign(accession=os.path.basename(csv).rsplit("_x_")[0]) for csv in input_files])
     column_order = ["accession","superkingdom","phylum","class","order","family","genus","species"]
     genome2gathertophits = genome2gathertophits[column_order]
     # ok, we should melt + split this dataframe
@@ -84,6 +114,7 @@ if __name__ == "__main__":
     p.add_argument("--output-match-info")
     p.add_argument("--true-lineages-csv")
     p.add_argument("--start-column", type=int, default=2)
+    p.add_argument("--input-is-directory", action="store_true")
     args = p.parse_args()
     if not args.output_match_info:
         args.output_match_info = args.output_csv.rsplit(".csv")[0] + ".matchinfo.csv"

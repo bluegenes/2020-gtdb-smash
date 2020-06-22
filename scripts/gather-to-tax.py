@@ -2,6 +2,7 @@
 
 ## modified slightly from ctb's gather-to-tax.py
 
+import sys
 import csv
 import sourmash
 import argparse
@@ -56,7 +57,10 @@ def summarize_gather_at(rank, tax_assign, gather_results):
     items = list(sum_uniq_weighted.items())
     items.sort(key = lambda x: -x[1])
     # get tophit
-    tophit = [items[0]]
+    if len(items)>0:
+        tophit = [items[0]]
+    else:
+        tophit = ["no_gather_results"]
     secondhit=[]
     if len(items) >1:
         secondhit = [items[1]]
@@ -86,7 +90,8 @@ def main():
         for row in r:
             gather_results.append(row)
     print(f'loaded {len(gather_results)} gather results.')
-
+    if not gather_results:
+        print("no gather matches")
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
                                               start_column=args.start_column)
     print(f'loaded {len(tax_assign)} tax assignments.')
@@ -120,6 +125,9 @@ def main():
         with open(tophit_file, "w") as out:
             # write header
             out.write(",".join(ranklist) + "\n")
+            if not gather_results:
+                out.write('no gather results')
+                sys.exit(0)
             for hitlist in [tophits]: #, secondhits]:
                 for match in hitlist:
                     for k, v in match:

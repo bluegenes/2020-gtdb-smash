@@ -1,0 +1,23 @@
+
+
+out_dir: tara_delmont/gtdb-classify
+sample_basename: tara-delmont
+genome_info: tara_delmont/tara-delmont-all-list.txt
+sigs_dir: /home/ctbrown/check-ntp/prokka
+ksize: 19
+alphabet: dayhoff
+
+
+# taxonomic info for genomes in the database
+#database_lineages_csv: gtdb-lineages.protein-filenames.with-signames.csv
+
+# location of database
+sbt_db:
+  gtdb-genus.dayhoff-k19: 
+    #- lineages_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.with-signames.csv
+    lineages_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-genus.csv
+    sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb_pep.rep_genus.dayhoff_scaled100_k19.sbt.zip
+
+lca_db:
+  - gtdb-genus.dayhoff-k19: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb_pep.rep_family.dayhoff_scaled100_k19.index.lca.json.gz
+

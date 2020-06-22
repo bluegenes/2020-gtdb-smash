@@ -39,6 +39,7 @@ for sample, info in sampleInfo.items():
     # accession:: fasta file map
     fasta_dir= info["input_path"]
     info_csv["filename"] = info_csv["filename"].apply(lambda x: os.path.join(fasta_dir, x))
+    info_csv["signame"] = info_csv["accession"] + " " + info_csv["species"]
     input_type = info["input_type"] #protein, dna, rna
     # if want multiple samples, need to add here instead of overwriting
     sample_acc2file = pd.Series(info_csv.filename.values,index=info_csv.accession).to_dict()
@@ -56,6 +57,7 @@ for sample, info in sampleInfo.items():
         gather_csv = pd.read_csv(info["gather_csv"])
         # this assumes they're in same input dir & are same input type as the samples above. ok for now. shrug.
         gather_csv["filename"] = gather_csv["filename"].apply(lambda x: os.path.join(fasta_dir, x))
+        gather_csv["signame"] = gather_csv["accession"] + " " + gather_csv["species"]
         gather_acc2file = pd.Series(gather_csv.filename.values,index=gather_csv.accession).to_dict()
         gather2signame = pd.Series(gather_csv.signame.values,index=gather_csv.accession).to_dict()
         # add accession:: filenames to main acc2filename dict
@@ -253,7 +255,7 @@ rule gather_lca:
         ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
         #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *10000,
+        mem_mb=lambda wildcards, attempt: attempt *30000,
         runtime=600,
     log: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.log")
     benchmark: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.benchmark")
@@ -265,7 +267,9 @@ rule gather_lca:
         --save-matches {output.matches} --threshold-bp=0  \
         --output-unassigned {output.unassigned} \
         --scaled {wildcards.scaled} -k {params.ksize} 2> {log}
+        touch {output}
         """
+# touch empty output file to enable rna ones to fail
 
 rule gather_sbt:
     input:
@@ -314,7 +318,7 @@ rule gather_to_tax:
     conda: "envs/sourmash-dev.yml"
     shell:
         """
-        python scripts/gather-to-tax {input.gather_csv} {input.lineages_csv} --tophits-csv {output.top_matches} > {output.gather_tax} 2> {log}
+        python scripts/gather-to-tax.py {input.gather_csv} {input.lineages_csv} --tophits-csv {output.top_matches} > {output.gather_tax} 2> {log}
         """
 rule aggregate_gather_to_tax:
     # make spreadsheet: each proteome:: top lineage hit

@@ -24,6 +24,7 @@
 
 
 #snakemake -s sig-sbt-forage.snakefile --configfile config/grow_gtdb_sbts_rna_dna.yml --profile farm --cluster-config config/bml_clusterconfig.yml --jobs 20 --nolock
+#snakemake -s sig-sbt-forage.snakefile --configfile config/grow_gtdb_sbts_rna_dna.yml --profile default  --jobs 4 --nolock
 #snakemake -s sig-sbt-forage.snakefile --configfile config/grow_gtdb_sbts.yml --profile farm --cluster-config config/bml_clusterconfig.yml --jobs 50
 
 #snakemake -s representative-index.snakefile --configfile config/representative-index.yml --profile default --jobs 1 #--nolock --restart-times 0 -n
@@ -31,5 +32,19 @@
 #snakemake -s representative-index.snakefile --configfile config/representative-index.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 1 -n #--nolock --restart-times 0 -n
 
 # set mem limit here so no more than one lca job runs at once
-snakemake -s build-representative-index.snakefile --configfile config/build-representative-index.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 15 --resources mem_mb=300000 #-n #--nolock --restart-times 0 -n
+
+#snakemake -s build-representative-index.snakefile --configfile config/build-representative-index.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 20 #--until index_lca # --restart-times 0 --until index_lca --latency-wait 120 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
+
+#snakemake -s build-representative-index.snakefile --configfile config/build-full-gtdb.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 20 # -n #--nolock --restart-times 0 -n
+
+#snakemake -s build-representative-index.snakefile --configfile config/build-representative-index.yml --profile farm --cluster-config cluster_config.yml --jobs 40 #--until sourmash_compute_protein #--until index_lca #--resources mem_mb=150000 #--latency-wait 120 #--restart-times 0  #--latency-wait 120 #-n
+
+#snakemake -s build-representative-index.snakefile --configfile config/build-representative-index.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 40 # --restart-times 0 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
+
+#snakemake -s build-representative-index.snakefile --configfile config/build-representative-index.yml --profile default --jobs 1  #-R aggregate_gather_to_tax --restart-times 0
+
+#snakemake -s build-representative-index.snakefile --configfile config/build-representative-index-dev.yml --profile default --jobs --until sourmash_compute_protein #  -R aggregate_gather_to_tax # -R gather_to_tax
+
+snakemake -s classify_sigs.snakefile --configfile tara_delmont/config.yml --profile default --jobs 1
+#snakemake -s classify_sigs.snakefile --configfile tara_delmont/config.yml --profile farm --cluster-config tara_delmont/cluster_config.yml --jobs 40
 

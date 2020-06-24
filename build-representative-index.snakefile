@@ -331,6 +331,9 @@ rule aggregate_gather_to_tax:
         gather_dir= lambda w: os.path.join(gather_dir, w.sample, w.alphabet, f"k{w.k}")
     log: os.path.join(logs_dir, "gather_tophits", "{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.log")
     benchmark: os.path.join(logs_dir, "gather_tophits", "{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.benchmark")
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt *3000,
+        runtime=60,
     conda: "envs/forage-env.yml"
     shell:
         """

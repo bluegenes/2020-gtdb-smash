@@ -18,24 +18,27 @@ genome_list = [ x.strip() for x in open(genome_info) ]
 
 lca_dbs = config.get("lca_db", {})
 sbt_dbs = config.get("sbt_db", {})
-gather_targets, lca_classify_targets=[],{}
+gather_targets, lca_classify_targets=[],[]
 # just enable single alpha-ksize for now
 ksize = config.get("ksize", 19)
 alphabet = config.get("alphabet", "dayhoff")
 
 # build gather output dir
 gather_dir =  os.path.join(out_dir, "gather", f"{alphabet}-k{ksize}")
+summary_dir =  os.path.join(out_dir, "gather_tophits")
+lca_classify_dir =  os.path.join(out_dir, "lca_classify")
 
 if sbt_dbs:
     # build gather targets
     # requires a few steps: 1. gather to db, 2. gather-to-tax, 3. aggregate tax results
     gather_targets=expand(os.path.join(gather_dir, "{genome}_x_{db_name}.gather_tophits.csv"), genome=genome_list, db_name = sbt_dbs.keys())
-#if lca_dbs:
-#    # run sourmash lca classify --> lca db
-#    lca_classify_targets= expand(os.path.join(gather_dir,"{sample}_x_{db_name}.lca-classify.csv"), sample=sample, db_name = lca_dbs.keys())
+    gather_targets+=expand(os.path.join(summary_dir, "{sample}_x_{db_name}.gather_tophits.csv"), sample=basename, db_name = sbt_dbs.keys())
+if lca_dbs:
+   # run sourmash lca classify --> lca db
+    lca_classify_targets= expand(os.path.join(lca_classify_dir,"{sample}_x_{db_name}.lca-classify.csv"), sample=basename, db_name = lca_dbs.keys())
 
 rule all:
-    input: gather_targets # + lca_classify_targets
+    input: gather_targets + lca_classify_targets
 
 # for protein signatures, multipy by 3 if necessary before calculating signature (sourmash v3.x)
 ksize_multiplier = {"dna": 1, "protein": 3, "dayhoff": 3, "hp":3}
@@ -87,22 +90,51 @@ rule gather_to_tax:
         python scripts/gather-to-tax.py {input.gather_csv} {input.lineages_csv} --tophits-csv {output.top_matches} > {output.gather_tax} 2> {log}
         """
 
-# need to modify bc no true lineages for tara genomes...
-#rule aggregate_gather_to_tax:
-#    # make spreadsheet: each proteome:: top lineage hit
-#    input:
-#        gather_tophits= lambda w: expand(os.path.join(gather_dir, "{genome}_x_{{sbt_db}}.gather_tophits.csv"), genome=genome_list)
-#        #true_lineages=lambda w: sampleInfo[w.sample]["gather_csv"]
-#    output:
-#         summary_csv=os.path.join(gather_dir, "gather_tophits", "{sample}", "{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.summary.csv"),
-#    params:
-#        gather_dir= lambda w: os.path.join(gather_dir, w.sample, w.alphabet, f"k{w.k}")
-#    log: os.path.join(logs_dir, "gather_tophits", "{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.log")
-#    benchmark: os.path.join(logs_dir, "gather_tophits", "{sample}.{alphabet}_scaled{scaled}_k{k}.gather_tophits.benchmark")
-#    conda: "envs/forage-env.yml"
-#    shell:
-#        """
-#        python scripts/aggregate-gather-to-tax-tophits.py --input-is-directory --true-lineages-csv {input.true_lineages} --output-csv {output} {params.gather_dir} 2> {log}
-#        """
+rule aggregate_gather_to_tax:
+    # make spreadsheet: each proteome:: top lineage hit
+    input:
+        gather_tophits= lambda w: expand(os.path.join(gather_dir, "{genome}_x_{{sbt_db}}.gather_tophits.csv"), genome=genome_list)
+    output:
+        summary_csv=os.path.join(summary_dir, "{sample}_x_{sbt_db}.gather_tophits.csv"),
+    params:
+        gather_dir= gather_dir 
+    #log: os.path.join(logs_dir, "aggregate_gather", "{sample}_x_{sbt_db}." + f"{alphabet}-k{ksize}.gather_tophits.log")
+    log: os.path.join(logs_dir, "aggregate_gather", "{sample}_x_{sbt_db}.gather_tophits.log")
+    benchmark: os.path.join(logs_dir, "aggregate_gather", "{sample}_x_{sbt_db}.gather_tophits.benchmark")
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt *3000,
+        runtime=60,
+    conda: "envs/forage-env.yml"
+    shell:
+        """
+        python scripts/aggregate-gather-to-tax-tophits.py --input-is-directory --output-csv {output} {params.gather_dir} 2> {log}
+        """
 
 
+# lca classify can do all sigs at once
+rule lca_classify_sigs:
+    input:
+        sigs= expand(os.path.join(sigs_dir, "{genome}.faa.sig"), genome=genome_list), # TARA_IOS_MAG_00042.fa.faa.sig
+        db= lambda w: lca_dbs[w.lca_db]["lca"]
+    output:
+        csv = os.path.join(lca_classify_dir, "{sample}_x_{lca_db}.lca-classify.csv"),
+    params:
+        sigs_dir = sigs_dir,
+        #alpha_cmd = lambda w: "--" + alphabet,
+        #ksize = int(ksize) * ksize_multiplier[alphabet],
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt *2000,
+        runtime=200,
+    log: os.path.join(logs_dir, "lca-classify", "{sample}_x_{lca_db}.lca-classify.log")
+    benchmark: os.path.join(logs_dir, "lca-classify", "{sample}_x_{lca_db}.lca-classify.benchmark")
+    conda: "envs/sourmash-dev.yml"
+    shell:
+        # --ignore-abundance to turn abund off
+        #sourmash lca classify --query {input.query} --db {input.db} \
+        #-o {output.csv} {params.alpha_cmd} \
+        #-k {params.ksize} 2> {log}
+        """
+        sourmash lca classify --query {params.sigs_dir} \
+        --traverse-directory --db {input.db} \
+        -o {output.csv} --threshold 0  2> {log}
+        """

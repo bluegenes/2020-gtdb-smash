@@ -19,5 +19,7 @@ sbt_db:
     sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb_pep.rep_genus.dayhoff_scaled100_k19.sbt.zip
 
 lca_db:
-  - gtdb-genus.dayhoff-k19: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb_pep.rep_family.dayhoff_scaled100_k19.index.lca.json.gz
+  gtdb-genus.dayhoff-k19:
+    lineages_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-genus.csv
+    lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb_pep.rep_family.dayhoff_scaled100_k19.index.lca.json.gz 
 

@@ -14,7 +14,8 @@ envs_dir = "envs"
 basename= config["sample_basename"]
 genome_info = config["genome_info"]
 #genome_list = [ x.strip() for x in open('tara-delmont-all-list.txt') ]
-genome_list = [ x.strip() for x in open(genome_info) ]
+#genome_list = [ x.strip() for x in open(genome_info) ]
+genome_list = [ x.strip().rsplit(".fa")[0] for x in open(genome_info) ]
 
 lca_dbs = config.get("lca_db", {})
 sbt_dbs = config.get("sbt_db", {})
@@ -22,11 +23,14 @@ gather_targets, lca_classify_targets=[],[]
 # just enable single alpha-ksize for now
 ksize = config.get("ksize", 19)
 alphabet = config.get("alphabet", "dayhoff")
+scaled= config.get("scaled", 100)
+input_type = config.get("input_type", "protein")
 
 # build gather output dir
 gather_dir =  os.path.join(out_dir, "gather", f"{alphabet}-k{ksize}")
 summary_dir =  os.path.join(out_dir, "gather_tophits")
 lca_classify_dir =  os.path.join(out_dir, "lca_classify")
+lca_summarize_dir =  os.path.join(out_dir, "lca_summarize")
 
 if sbt_dbs:
     # build gather targets
@@ -36,9 +40,10 @@ if sbt_dbs:
 if lca_dbs:
    # run sourmash lca classify --> lca db
     lca_classify_targets= expand(os.path.join(lca_classify_dir,"{sample}_x_{db_name}.lca-classify.csv"), sample=basename, db_name = lca_dbs.keys())
+    lca_summarize_targets= expand(os.path.join(lca_summarize_dir,"{sample}_x_{db_name}.lca-summarize.csv"), sample=basename, db_name = lca_dbs.keys())
 
 rule all:
-    input: gather_targets + lca_classify_targets
+    input: gather_targets + lca_classify_targets + lca_summarize_targets
 
 # for protein signatures, multipy by 3 if necessary before calculating signature (sourmash v3.x)
 ksize_multiplier = {"dna": 1, "protein": 3, "dayhoff": 3, "hp":3}
@@ -46,7 +51,9 @@ ksize_multiplier = {"dna": 1, "protein": 3, "dayhoff": 3, "hp":3}
 # gather each sig
 rule gather_sig:
     input:
-        query= os.path.join(sigs_dir, "{genome}.faa.sig"), # TARA_IOS_MAG_00042.fa.faa.sig 
+        # TARA_IOS_MAG_00042.fa.faa.sig or # TARA_ANE_MAG_00001_protein_scaled100_k11.sig
+        query= os.path.join(sigs_dir, f"{input_type}", f"{alphabet}", f"k{ksize}", "{genome}_" + f"{alphabet}_scaled{scaled}_k{ksize}.sig"), 
+        #query= os.path.join(sigs_dir, "{genome}.faa.sig")
         db= lambda w: sbt_dbs[w.sbt_db]["sbt"]
     output:
         csv = os.path.join(gather_dir, "{genome}_x_{sbt_db}.gather.csv"),
@@ -57,7 +64,7 @@ rule gather_sig:
         ksize = int(ksize) * ksize_multiplier[alphabet],
     resources:
         mem_mb=lambda wildcards, attempt: attempt *3000,
-        runtime=20,
+        runtime=60,
     log: os.path.join(logs_dir, "gather", "{genome}_x_{sbt_db}.gather.log")
     benchmark: os.path.join(logs_dir, "gather", "{genome}_x_{sbt_db}.gather.benchmark")
     conda: "envs/sourmash-dev.yml"
@@ -114,7 +121,8 @@ rule aggregate_gather_to_tax:
 # lca classify can do all sigs at once
 rule lca_classify_sigs:
     input:
-        sigs= expand(os.path.join(sigs_dir, "{genome}.faa.sig"), genome=genome_list), # TARA_IOS_MAG_00042.fa.faa.sig
+        #sigs= expand(os.path.join(sigs_dir, "{genome}.faa.sig"), genome=genome_list), # TARA_IOS_MAG_00042.fa.faa.sig
+        sigs = expand(os.path.join(sigs_dir, f"{input_type}", f"{alphabet}", f"k{ksize}", "{genome}_" + f"{alphabet}_scaled{scaled}_k{ksize}.sig"), genome=genome_list),
         db= lambda w: lca_dbs[w.lca_db]["lca"]
     output:
         csv = os.path.join(lca_classify_dir, "{sample}_x_{lca_db}.lca-classify.csv"),
@@ -123,7 +131,7 @@ rule lca_classify_sigs:
         #alpha_cmd = lambda w: "--" + alphabet,
         #ksize = int(ksize) * ksize_multiplier[alphabet],
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *2000,
+        mem_mb=lambda wildcards, attempt: attempt *20000,
         runtime=200,
     log: os.path.join(logs_dir, "lca-classify", "{sample}_x_{lca_db}.lca-classify.log")
     benchmark: os.path.join(logs_dir, "lca-classify", "{sample}_x_{lca_db}.lca-classify.benchmark")
@@ -136,5 +144,28 @@ rule lca_classify_sigs:
         """
         sourmash lca classify --query {params.sigs_dir} \
         --traverse-directory --db {input.db} \
+        -o {output.csv} --threshold 0  2> {log}
+        """
+
+rule lca_summarize_sigs:
+    input:
+        #sigs= expand(os.path.join(sigs_dir, "{genome}.faa.sig"), genome=genome_list), # TARA_IOS_MAG_00042.fa.faa.sig
+        sigs = expand(os.path.join(sigs_dir, f"{input_type}", f"{alphabet}", f"k{ksize}", "{genome}_" + f"{alphabet}_scaled{scaled}_k{ksize}.sig"), genome=genome_list),
+        db= lambda w: lca_dbs[w.lca_db]["lca"]
+    output:
+        csv = os.path.join(lca_summarize_dir, "{sample}_x_{lca_db}.lca-summarize.csv"),
+    params:
+        sigs_dir = sigs_dir,
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt *20000,
+        runtime=200,
+    log: os.path.join(logs_dir, "lca-classify", "{sample}_x_{lca_db}.lca-summarize.log")
+    benchmark: os.path.join(logs_dir, "lca-classify", "{sample}_x_{lca_db}.lca-summarize.benchmark")
+    conda: "envs/sourmash-dev.yml"
+    shell:
+        """
+        sourmash lca summarize  --query {params.sigs_dir} \
+        --traverse-directory --singleton \
+        --db {input.db} \
         -o {output.csv} --threshold 0  2> {log}
         """

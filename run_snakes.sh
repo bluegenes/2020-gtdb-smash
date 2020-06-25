@@ -33,9 +33,9 @@
 
 # set mem limit here so no more than one lca job runs at once
 
-#snakemake -s build-representative-index.snakefile --configfile config/build-representative-index.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 20 #--until index_lca # --restart-times 0 --until index_lca --latency-wait 120 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
+#snakemake -s build-representative-index.snakefile --configfile config/build-representative-index.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 40 #--until index_lca # --restart-times 0 --until index_lca --latency-wait 120 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
 
-#snakemake -s build-representative-index.snakefile --configfile config/build-full-gtdb.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 20 # -n #--nolock --restart-times 0 -n
+#snakemake -s build-representative-index.snakefile --configfile config/build-full-gtdb.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 40 --nolock #--restart-times 0 -n
 
 #snakemake -s build-representative-index.snakefile --configfile config/build-representative-index.yml --profile farm --cluster-config cluster_config.yml --jobs 40 #--until sourmash_compute_protein #--until index_lca #--resources mem_mb=150000 #--latency-wait 120 #--restart-times 0  #--latency-wait 120 #-n
 
@@ -45,6 +45,14 @@
 
 #snakemake -s build-representative-index.snakefile --configfile config/build-representative-index-dev.yml --profile default --jobs --until sourmash_compute_protein #  -R aggregate_gather_to_tax # -R gather_to_tax
 
-snakemake -s classify_sigs.snakefile --configfile tara_delmont/config.yml --profile default --jobs 1
-#snakemake -s classify_sigs.snakefile --configfile tara_delmont/config.yml --profile farm --cluster-config tara_delmont/cluster_config.yml --jobs 40
+#snakemake -s classify_sigs.snakefile --configfile tara_delmont/dayhoff_config.yml --profile default --jobs 1
+#snakemake -s classify_sigs.snakefile --configfile tara_delmont/dayhoff_config.yml --profile farm --cluster-config tara_delmont/cluster_config.yml --jobs 20
+
+#snakemake -s classify_sigs.snakefile --configfile tara_delmont/protein_config.yml --profile farm --cluster-config tara_delmont/cluster_config.yml --jobs 10
+#snakemake -s classify_sigs.snakefile --configfile tara_delmont/protein_config.yml --profile farm --cluster-config tara_delmont/cluster_config.yml --jobs 40
+#snakemake -s classify_sigs.snakefile --configfile tara_delmont/protein_config.yml --profile default --jobs 30 
+
+#snakemake -s compute-sigs.snakefile --configfile tara_delmont/compute-protein-sigs.yml --profile farm --cluster-config tara_delmont/cluster_config.yml --jobs 40
+snakemake -s compute-sigs.snakefile --configfile tara_delmont/compute-nucleotide-sigs.yml --profile farm --cluster-config tara_delmont/cluster_config.yml --jobs 40
+
 

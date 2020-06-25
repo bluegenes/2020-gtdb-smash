@@ -1,0 +1,19 @@
+
+
+genomes_info: tara_delmont/tara-delmont-all-list.txt
+genomes_dir: /home/ctbrown/check-ntp/prokka
+
+out_dir: tara_delmont/sigs
+
+input_type: protein
+
+alphabets:
+  protein:
+    ksize: [11]
+    scaled: [100]
+  dayhoff:
+    ksize: [19]
+    scaled: [100]
+  hp:
+    ksize: [33,35]
+    scaled: [100]

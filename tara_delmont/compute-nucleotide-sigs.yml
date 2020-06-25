@@ -1,0 +1,14 @@
+
+
+genomes_info: tara_delmont/tara-delmont-all-list.txt
+genomes_dir: /home/ctbrown/check-ntp/prokka
+
+out_dir: tara_delmont/sigs
+
+input_type: nucleotide
+
+alphabets:
+  nucleotide:
+    ksize: [21, 31]
+    scaled: [1000]
+

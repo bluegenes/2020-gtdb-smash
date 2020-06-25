@@ -255,10 +255,13 @@ rule gather_lca:
         ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
         #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *30000,
+        mem_mb=lambda wildcards, attempt: attempt *3000,
         runtime=600,
     log: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.log")
     benchmark: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.lca-gather.benchmark")
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt *3000,
+        runtime=60,
     conda: "envs/sourmash-dev.yml"
     shell:
         # do we want abundance?? --ignore-abundance to turn off
@@ -293,6 +296,9 @@ rule gather_sbt:
         runtime=600000,
     log: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.log")
     benchmark: os.path.join(logs_dir, "gather", "{accession}_x_{sample}.{alphabet}_scaled{scaled}_k{k}.sbt-gather.benchmark")
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt *3000,
+        runtime=60,
     conda: "envs/sourmash-dev.yml"
     shell:
         # do we want abundance?? --ignore-abundance to turn off

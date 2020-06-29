@@ -54,24 +54,46 @@ representative_indices:
   #      #- sbt
   #  alphabet:
   #    nucleotide:
-  #      ksizes: [21,31,51] 
+  #      ksizes: [31] #[21,31,51] 
   #      scaled: [1000]
-
-  gtdb_pep.rep_genus:
-    input_type: protein
-    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
-    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-genus.csv
-    gather_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n1th-representative-at-genus.csv
+  gtdb_rna.rep_genus:
+    input_type: rna
+    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_rna_fna
+#    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.rna-filenames.n0th-representative-at-genus.csv
+    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.rna-filenames.n1th-representative-at-genus.csv
     index_outdir: "index-gtdb"
     index_types:
         - lca
+        #- sbt
     alphabet:
-      protein:
-        ksizes: [11] #[7,9,11]
-        scaled: [100]
-      dayhoff:
-        ksizes: [19] #[17,19,21,23,25]
-        scaled: [100]
+      nucleotide:
+        ksizes: [21,31,51] 
+        scaled: [1000]
+      translate_protein:
+        ksizes: [11] #[5,6,7,9,11,13] #5,7
+        scaled: [100] #[50, 200, 1000] # 1
+      translate_dayhoff:
+        ksizes: [19] #[5,6,7,8,9,11,12,13,15,17] #11,13
+        scaled: [100] #[50, 200, 1000] #1
+      translate_hp:
+        ksizes: [35] #[15,16,17,18,19,21,23,25] #[15,17,19,21]
+        scaled: [100] #[50, 200, 1000]
+
+#  gtdb_pep.rep_genus:
+#    input_type: protein
+#    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+#    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-genus.csv
+#    gather_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n1th-representative-at-genus.csv
+#    index_outdir: "index-gtdb"
+#    index_types:
+#        - lca
+#    alphabet:
+      #protein:
+      #  ksizes: [11] #[7,9,11]
+      #  scaled: [100]
+     #dayhoff:
+     #  ksizes: [19] #[17,19,21,23,25]
+      #  scaled: [100]
 #      hp:
 #        ksizes: [33] #[31,33,35]
 #        scaled: [100]

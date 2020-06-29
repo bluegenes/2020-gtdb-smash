@@ -12,11 +12,16 @@ logs_dir = os.path.join(out_dir, "logs")
 envs_dir = "envs"
 
 basename= config["sample_basename"]
-genome_info = config["genome_info"]
+genome_info = config.get("genome_list")
 #genome_list = [ x.strip() for x in open('tara-delmont-all-list.txt') ]
 #genome_list = [ x.strip() for x in open(genome_info) ]
-genome_list = [ x.strip().rsplit(".fa")[0] for x in open(genome_info) ]
-
+if genome_info:
+    genome_list = [ x.strip().rsplit(".fa")[0] for x in open(genome_info) ]
+else:
+    genome_csv = pd.read_csv(info["genome_csv"])
+    # this assumes they're in same input dir & are same input type as the samples above. ok for now. shrug.
+    genome_list = gather_csv.accession.to_list()
+    
 lca_dbs = config.get("lca_db", {})
 sbt_dbs = config.get("sbt_db", {})
 gather_targets, lca_classify_targets=[],[]
@@ -46,8 +51,8 @@ rule all:
     input: gather_targets + lca_classify_targets + lca_summarize_targets
 
 # for protein signatures, multipy by 3 if necessary before calculating signature (sourmash v3.x)
-ksize_multiplier = {"dna": 1, "protein": 3, "dayhoff": 3, "hp":3}
-
+ksize_multiplier = {"nucleotide": 1, "dna": 1, "protein": 3, "dayhoff": 3, "hp":3}
+moltype_map = {"nucleotide": "dna", "protein":"protein", "dayhoff": "dayhoff", "hp":"hp", "translate_protein": "protein", "translate_dayhoff": "dayhoff", "translate_hp": "hp"}
 # gather each sig
 rule gather_sig:
     input:
@@ -60,7 +65,7 @@ rule gather_sig:
         matches = os.path.join(gather_dir, "{genome}_x_{sbt_db}.gather.matches"),
         unassigned = os.path.join(gather_dir, "{genome}_x_{sbt_db}.gather.unassigned")
     params:
-        alpha_cmd = lambda w: "--" + alphabet,
+        alpha_cmd = lambda w: "--" + moltype_map[alphabet],
         ksize = int(ksize) * ksize_multiplier[alphabet],
     resources:
         mem_mb=lambda wildcards, attempt: attempt *3000,

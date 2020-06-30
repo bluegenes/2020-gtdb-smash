@@ -240,6 +240,7 @@ rule lca_to_sbt:
     resources:
         mem_mb= lambda wildcards, attempt: attempt *100000,
         runtime=600,
+    conda: "envs/sourmash-dev.yml"
     shell:
         """
         python scripts/convert-lca-to-sbt.py {input} {output} 2> {log}

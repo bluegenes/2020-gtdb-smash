@@ -122,10 +122,10 @@ def generate_sigs_from_file(input_file, input_type, alphabet, ksize, scaled, sin
 
     # start with fresh minhash
     if input_type == "nucleotide":
-        mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled, track_abundance=abund) #, is_protein=False) # need is_protein??
+        mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled, track_abundance=abund, is_protein=False) # need is_protein??
     elif input_type == "protein":
         k=ksize*3 ## need to multiply by 3 to get same ksize, bc add_protein method does k/3
-        mh = sourmash.MinHash(ksize=k, n=0, scaled=scaled, track_abundance=abund) #, is_protein=True) # need is_protein??
+        mh = sourmash.MinHash(ksize=k, n=0, scaled=scaled, track_abundance=abund, is_protein=True) # need is_protein??
 
     # read file and add sigs
     records = try_reading_fasta_file(input_file)

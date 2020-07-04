@@ -164,7 +164,7 @@ def generate_lossy_sigs(args):
     if args.print_output_alphabets:
         sys.stdout.write("\nNucleotide Options:\n\t")
         sys.stdout.write("\n\t".join(enc.NUCLEOTIDE_ENCODINGS.keys()) + "\n\n")
-        sys.stdout.write("Protein Options\n\t")
+        sys.stdout.write("Protein Options:\n\t")
         sys.stdout.write("\n\t".join(enc.PEPTIDE_ENCODINGS.keys()) + "\n\n")
         sys.exit(0)
 

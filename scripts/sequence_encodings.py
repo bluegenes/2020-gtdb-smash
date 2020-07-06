@@ -244,6 +244,37 @@ AA9_MAPPING = {
     "W": "i",
 }
 
+
+# Li et al (2003) derived groupings from the BLOSUM62 Matrix
+# "Reduction of protein sequence complexity by residue grouping"
+# https://doi.org/10.1093/protein/gzg044
+# Many groupings, but their results state 10 groups was best.
+# This is their 10-group split.
+
+BS62_MAPPING = {
+    "A": "a",
+    "C": "a",
+    "S": "b",
+    "T": "b",
+    "W": "c",
+    "F": "c",
+    "Y": "c",
+    "I": "d",
+    "V": "d",
+    "L": "e",
+    "M": "e",
+    "D": "f",
+    "E": "f",
+    "K": "g",
+    "R": "g",
+    "Q": "g",
+    "N": "h",
+    "H": "h",
+    "P": "i",
+    "G": "j",
+}
+
+
 # This is Olga Botvinnik's attempt at making a mapping as well
 BOTVINNIK_MAPPING = {
     # Small and hydrophobic
@@ -311,6 +342,7 @@ AA9_TRANSLATION = str.maketrans(AA9_MAPPING)
 GBMR4_TRANSLATION = str.maketrans(GBMR4_MAPPING)
 SDM12_TRANSLATION = str.maketrans(SDM12_MAPPING)
 HSDM17_TRANSLATION = str.maketrans(HSDM17_MAPPING)
+BS62_TRANSLATION = str.maketrans(BS62_MAPPING)
 BOTVINNIK_TRANSLATION = str.maketrans(BOTVINNIK_MAPPING)
 
 #nucleotide translation
@@ -331,6 +363,7 @@ PEPTIDE_MAPPINGS = {
     "gbmr4": GBMR4_MAPPING,
     "sdm12": SDM12_MAPPING,
     "hsdm17": HSDM17_MAPPING,
+    "bs62": BS62_MAPPING,
 }
 
 PEPTIDE_ENCODINGS = {
@@ -346,6 +379,7 @@ PEPTIDE_ENCODINGS = {
     "gbmr4": GBMR4_TRANSLATION,
     "sdm12": SDM12_TRANSLATION,
     "hsdm17": HSDM17_TRANSLATION,
+    "bs62": BS62_TRANSLATION,
 }
 
 PROTEIN_LIKE = "protein", "peptide", "protein20", "peptide20", "aa20"
@@ -388,6 +422,7 @@ VALID_PEPTIDE_MOLECULES = (
     "gbmr4",
     "sdm12",
     "hsdm17",
+    "bs62",
 )
 
 # Unambiguous, unique peptide alphabet names that include the alphabet size
@@ -400,6 +435,7 @@ UNIQUE_VALID_PEPTIDE_MOLECULES = (
     "gbmr4",
     "sdm12",
     "hsdm17",
+    "bs62",
 )
 
 ALPHABET_ALIASES = {
@@ -412,6 +448,7 @@ ALPHABET_ALIASES = {
     "gbmr4": ("gbmr4",),
     "sdm12": ("sdm12",),
     "hsdm17": ("hsdm17",),
+    "bs62": ("bs62",),
 }
 
 ALIAS_TO_ALPHABET = dict(
@@ -440,6 +477,7 @@ ALPHABET_SIZES = {
     "gbmr4": 4,
     "sdm12": 12,
     "hsdm17": 17,
+    "bs62": 10,
 }
 
 BEST_KSIZES = {
@@ -459,6 +497,7 @@ BEST_KSIZES = {
     "gbmr4": 16,
     "sdm12": 9,
     "hsdm17": 8,
+    "bs62": 11, #?
 }
 
 
@@ -535,6 +574,32 @@ def encode_peptide(peptide_sequence, molecule):
             f"{molecule} is not a valid amino acid encoding, "
             "only "
             f"{', '.join(PEPTIDE_ENCODINGS.keys())} can be used"
+        )
+
+# the next two functions are in ntp's generate_lossy_signature (modified from protein fn's above)- might be useful here?
+def translate_sequence(sequence, input_type, molecule):
+    if input_type == "nucleotide":
+        translator = NUCLEOTIDE_ENCODINGS[molecule]
+    elif input_type == "protein":
+        translator = PEPTIDE_ENCODINGS[molecule]
+    return sequence.translate(translator)
+
+def reencode_sequence(sequence, input_type, molecule):
+    # modified from encode_peptide in sencha code
+    assert input_type in ["nucleotide", "protein"]
+    if input_type == "nucleotide":
+        valid_encodings = NUCLEOTIDE_ENCODINGS.keys()
+    elif input_type == "protein":
+        valid_encodings = PEPTIDE_ENCODINGS.keys()
+    if molecule in valid_encodings:
+        return translate_sequence(sequence, input_type, molecule)
+    elif molecule == input_type:
+        return sequence
+    else:
+        raise ValueError(
+            f"{molecule} is not a valid {input_type} encoding, "
+            "only "
+            f"{', '.join(valid_encodings)} can be used"
         )
 
 

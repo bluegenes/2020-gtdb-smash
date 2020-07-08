@@ -49,9 +49,44 @@
 #python scripts/match-accession-to-filename.py gtdb-lineages.csv --sigfile-directory gtdb_r89_rep_genomes_faa --output-csv gtdb-lineages.protein-filenames.csv
 
 
-#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank order
-#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank family
-#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank genus
+#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank order --keep-all
+#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank family --keep-all
+#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank genus --keep-all
 
-python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank family --nth-to-select 1
+#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank order --nth-to-select 0
+#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank family --nth-to-select 0
+#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank genus --nth-to-select 0
+
+# select genomes _not_ in the representative subset to try to gather in representative indices!
+#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank family --nth-to-select 1
+#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank order --nth-to-select 1
+#python scripts/select-representative-lineages.py gtdb-lineages.protein-filenames.csv --representative-rank genus --nth-to-select 1
+
+#python scripts/select-representative-lineages.py gtdb_evol_groups.correct-lineages.with_filenames.csv --representative-rank family --nth-to-select 1
+#python scripts/select-representative-lineages.py gtdb_evol_groups.correct-lineages.with_filenames.csv --representative-rank order --nth-to-select 1
+
+### rna representative lineages: first, find rna filenames, then select
+#python scripts/match-accession-to-filename.py gtdb-lineages.csv --sigfile-directory gtdb_r89_rep_genomes_rna_fna --output-csv gtdb-lineages.rna-filenames.csv
+#python scripts/select-representative-lineages.py gtdb-lineages.rna-filenames.csv --representative-rank order --nth-to-select 0
+#python scripts/select-representative-lineages.py gtdb-lineages.rna-filenames.csv --representative-rank order --nth-to-select 1
+#python scripts/select-representative-lineages.py gtdb-lineages.rna-filenames.csv --representative-rank genus --nth-to-select 0
+#python scripts/select-representative-lineages.py gtdb-lineages.rna-filenames.csv --representative-rank genus --nth-to-select 1
+#python scripts/select-representative-lineages.py gtdb-lineages.rna-filenames.csv --representative-rank family --nth-to-select 0
+#python scripts/select-representative-lineages.py gtdb-lineages.rna-filenames.csv --representative-rank family --nth-to-select 1
+#python scripts/select-representative-lineages.py gtdb-lineages.rna-filenames.csv --representative-rank genus --keep-all
+
+#python scripts/select-representative-lineages.py gtdb_evol_groups.correct-lineages.with_filenames_path100_only.csv --keep-all 
+
+
+# path100:: compare and plot
+#python scripts/forage-sbt.py path100.sbt.zip --query-csv gtdb_evol_groups.correct-lineages.with_filenames_path100_only.csv --distance-from-species-csv path100.dist-from-species.csv --distance-from-species-plot path100.pathwise-dist-from-species.svg --full-compare-csv  path100.compare.csv --full-compare-plot path100.compare.svg
+
+## Set up dna genus-n1th
+
+python scripts/match-accession-to-filename.py gtdb-lineages.csv --sigfile-directory  /home/ctbrown/gtdbtk/release89/fastani/database --output-csv gtdb-lineages.dna-filenames.csv
+python scripts/select-representative-lineages.py gtdb-lineages.dna-filenames.csv --representative-rank genus --nth-to-select 0
+python scripts/select-representative-lineages.py gtdb-lineages.dna-filenames.csv --representative-rank genus --nth-to-select 1
+python scripts/select-representative-lineages.py gtdb-lineages.dna-filenames.csv --representative-rank genus --keep-all
+
+
 

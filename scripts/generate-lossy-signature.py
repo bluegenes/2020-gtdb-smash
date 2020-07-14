@@ -116,7 +116,7 @@ def hash_sequence_list(seqlist, input_type, ksize, alphabet, skipinfo=None):
 
 
 
-def generate_sigs_from_file(input_file, input_type, alphabet, ksize, scaled, singleton=False, skipinfo=None, ignore_abundance=False): #, translate=False):
+def generate_sigs_from_file(input_file, input_type, alphabet, ksize, scaled, singleton=False, signame=None, skipinfo=None, ignore_abundance=False): #, translate=False):
     sigs = []
     abund = not ignore_abundance
 
@@ -136,7 +136,7 @@ def generate_sigs_from_file(input_file, input_type, alphabet, ksize, scaled, sin
                 hashes = hash_sequence(record.sequence, input_type, ksize, alphabet, skipinfo=skipinfo)
                 # add_many takes care of scaled, abundance tracking, etc
                 mh.add_many(hashes)
-                sigs+=[sourmash.SourmashSignature(mh, name=record.name)]
+                sigs+=[sourmash.SourmashSignature(mh, name=record.name, filename=os.path.basename(input_file))]
                 # reset mh
                 mh = sourmash.MinHash(ksize=ksize, n=0, scaled=scaled, track_abundance=abund) #, is_protein=False) # need is_protein??
             else:
@@ -152,7 +152,9 @@ def generate_sigs_from_file(input_file, input_type, alphabet, ksize, scaled, sin
                 hashes = hash_sequence_list(file_chunk, input_type, ksize, alphabet, skipinfo=skipinfo)
                 mh.add_many(hashes)
             # minhash --> signature, using filename as signature name ..i think this happens automatically if don't provide name?
-            sigs+=[sourmash.SourmashSignature(mh, name=os.path.basename(input_file))]
+            if not signame:
+                signame = os.path.basename(input_file)
+            sigs+=[sourmash.SourmashSignature(mh, name=signame, filename=os.path.basename(input_file))]
     # return many sigs (singleton) or one sig per file
     return sigs
 
@@ -175,22 +177,27 @@ def generate_lossy_sigs(args):
     alphabet = args.output_alphabet
     scaled=args.scaled
     singleton = args.singleton
+    signame = args.signame
+    ignore_abundance = args.ignore_abundance
     skip=None
     if args.skipmer:
         if input_type == "protein":
             sys.stdout.write("\nError: Please specify --input-alphabet as nucleotide or remove the ---skipmer option \n\n")
-            sys.exit(0)
+            sys.exit(-1)
         #just set default for now
         skip=(3,2)
 
     # build signature(s) from file
-    sigs = generate_sigs_from_file(input_fasta, input_type, alphabet, ksize, scaled, singleton, skip) #, args.ignore_abundance, args.translate)
+    sigs = generate_sigs_from_file(input_fasta, input_type, alphabet, ksize, scaled, singleton, signame, skip, ignore_abundance) #, args.translate)
 
     # build output file if necessary
-    out_sig = args.signature_file
+    out_sig = args.output_signature
     if not out_sig:
         if singleton:
             out_sig = input_fasta.rsplit(".fa")[0] + f".{alphabet}_k{ksize}_scaled{scaled}_singleton.sig"
+        elif args.skipmer:
+            #relies on default skip_m = 2, skip_n = 3
+            out_sig = input_fasta.rsplit(".fa")[0] + f".{alphabet}_skip-n3m2_k{ksize}_scaled{scaled}.sig"
         else:
             out_sig = input_fasta.rsplit(".fa")[0] + f".{alphabet}_k{ksize}_scaled{scaled}.sig"
     # write sigs to file
@@ -201,13 +208,14 @@ def generate_lossy_sigs(args):
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("input_fasta")
-    p.add_argument("--signature-file")
-    p.add_argument("--ksize", type=int, default=11)
+    p.add_argument("-o", "--output_signature", help = "filename for output signature")
+    p.add_argument("--ksize", type=int, default=19)
     p.add_argument("--scaled", type=int, default=1)
+    p.add_argument("--signame", default=None, help="optionally set a signature name (not used for singleton sigs)")
     p.add_argument("--input-alphabet", default="protein", help="input type (nucleotide or protein)")
     p.add_argument("--output-alphabet", default="dayhoff", help="desired alphabet for sourmash signatures")
     p.add_argument("--print-output-alphabets", action="store_true")
-    #p.add_argument("--ignore-abundance", action="store_true", help="do not store abundance information for signatures")
+    p.add_argument("--ignore-abundance", action="store_true", help="do not store abundance information for signatures")
     p.add_argument("--skipmer", action="store_true", help="compute skipmer kmers with (m=2,n=3)")
     p.add_argument("--singleton", action="store_true", help="with fasta inputs, add one signature per fasta entry, rather than one per file")
     args = p.parse_args()

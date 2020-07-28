@@ -35,8 +35,8 @@ for sample, info in sampleInfo.items():
     sampleInfo[sample]["accessions"] = acc2signame.keys()
     for alpha, alphainfo in info["alphabet"].items():
         sig_targets+=expand(os.path.join(compute_dir, input_type, "{alphabet}", "k{k}", "{accession}_{alphabet}_scaled{scaled}_k{k}.sig"), accession=sample_acc2file.keys(), alphabet=alpha,scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
-#        index_targets+=expand(os.path.join(index_dir,"lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json.gz"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
-#        index_targets+=expand(os.path.join(index_dir,"sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+        index_targets+=expand(os.path.join(index_dir,"lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json.gz"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
+        index_targets+=expand(os.path.join(index_dir,"sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip"), sample=sample, alphabet=alpha, scaled=alphainfo["scaled"], k=alphainfo["ksizes"])
 
 
 rule all:
@@ -65,7 +65,7 @@ rule sourmash_compute_dna:
         runtime=1200,
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.dna.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.dna.compute.benchmark")
-    conda: "envs/sourmash-dev.yml"
+    conda: "envs/sourmash3.4.yml"
     shell:
         #generate-lossy-signature.py does the ksize multiplication internally
         """
@@ -93,7 +93,7 @@ rule sourmash_compute_protein:
         runtime=1200,
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.protein.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.protein.compute.benchmark")
-    conda: "envs/sourmash-dev.yml"
+    conda: "envs/sourmash3.4.yml"
     shell:
         #generate-lossy-signature.py does the ksize multiplication internally
         """
@@ -121,7 +121,7 @@ rule sourmash_compute_rna:
         runtime=1200,
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.rna.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.rna.compute.benchmark")
-    conda: "envs/sourmash-dev.yml"
+    conda: "envs/sourmash3.4.yml"
     shell:
         #generate-lossy-signature.py does the ksize multiplication internally
         """
@@ -141,56 +141,94 @@ def aggregate_sigs(w):
     return siglist
 
 
-#### should I just say the alpha is dna or protein for now??
-#rule index_lca:
-#    input:
-#        sigs=aggregate_sigs,
-#        taxonomy= lambda w: sampleInfo[w.sample]["info_csv"]
-#    output:
-#        os.path.join(index_dir,"lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json.gz"),
-#    threads: 1
-#    params:
-#        alpha= lambda w: (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
-#        #alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
-#        alpha_cmd= lambda w: "--" + moltype_map[w.alphabet],
-#        translate = lambda w: " --translate " if w.alphabet.startswith("translate") else "",
-#        input_type = lambda w: sampleInfo[w.sample]["input_type"],
-#        ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
-#        report= lambda w: os.path.join(index_dir,"lca", f"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index.lca.report"),
-#        #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
-#        sigdir= lambda w: os.path.join(compute_dir, sampleInfo[w.sample]["input_type"], w.alphabet, f"k{w.k}")
-#    resources:
-#        mem_mb= lambda wildcards, attempt: attempt *100000,
-#        runtime=600,
-#    log: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.log")
-#    benchmark: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.benchmark")
-#    conda: "envs/sourmash-dev.yml"
-#    shell:
-#        """
-#        sourmash lca index \
-#          --ksize {params.ksize} \
-#          --scaled {wildcards.scaled} \
-#          --split-identifiers \
-#          --require-taxonomy \
-#          --traverse-directory \
-#          --report {params.report} \
-#          {params.alpha_cmd} {input.taxonomy} {output} \
-#          {params.sigdir} 2> {log}
-#        """
-#        #touch  {output.report}
-#        #{compute_dir}/{params.input_type}/{wildcards.alphabet}/k{wildcards.k}/*_{params.alpha}_scaled{wildcards.scaled}_k{wildcards.k}.sig  2> {log}
+# in compute_lossy_sigs, all nucl are "dna", all prot alphas are "protein"
+alpha_map= {
+	"purine-pyrimidine": "--dna",
+	"weak-strong": "--dna",
+	"amino-keto": "--dna",
+	"hp": "--hp",
+	"hp2": "--hp",
+	"hydrophobic-polar": "--hp",
+	"dayhoff": "--dayhoff",
+	"dayhoff6": "--dayhoff",
+	"dayhoff_v2": "--protein",
+	"botvinnik": "--protein",
+	"botvinnik8": "--protein",
+	"aa9": "--protein",
+	"gbmr4": "--protein",
+	"sdm12": "--protein",
+	"hsdm17": "--protein",
+	"bs62": "--protein" }
+
+ksize_multiplier = {
+	"purine-pyrimidine": 1,
+	"weak-strong": 1,
+	"amino-keto": 1,
+	"hp": 3,
+	"hp2": 3,
+	"hydrophobic-polar": 3,
+	"dayhoff": 3,
+	"dayhoff6": 3,
+	"dayhoff_v2": 3,
+	"botvinnik": 3,
+	"botvinnik8": 3,
+	"aa9": 3,
+	"gbmr4": 3,
+	"sdm12": 3,
+	"hsdm17": 3,
+	"bs62": 3 
+    }
+
+rule index_lca:
+    input:
+        sigs=aggregate_sigs,
+        taxonomy= lambda w: sampleInfo[w.sample]["info_csv"]
+    output:
+        os.path.join(index_dir,"lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json.gz"),
+    threads: 1
+    params:
+        alpha= lambda w: (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
+        #alpha_cmd= lambda w: " --" + (w.alphabet.rsplit("translate_")[1] if w.alphabet.startswith("translate") else w.alphabet), # remove translate
+        alpha_cmd= lambda w: alpha_map[w.alphabet],
+        #alpha = lambda w: w.alphabet.rsplit("_", 1)[1] if "_" in w.alphabet else w.alphabet,
+        translate = lambda w: " --translate " if w.alphabet.startswith("translate") else "",
+        input_type = lambda w: sampleInfo[w.sample]["input_type"],
+        ksize = lambda w: (int(w.k) * ksize_multiplier[w.alphabet]),
+        report= lambda w: os.path.join(index_dir,"lca", f"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index.lca.report"),
+        #output_prefix = lambda w: os.path.join(index_dir,"{w.sample}.{w.alphabet}_scaled{w.scaled}_k{w.k}.index")
+        sigdir= lambda w: os.path.join(compute_dir, sampleInfo[w.sample]["input_type"], w.alphabet, f"k{w.k}")
+    resources:
+        mem_mb= lambda wildcards, attempt: attempt *100000,
+        runtime=600,
+    log: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.log")
+    benchmark: os.path.join(logs_dir, "index-lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index-lca.benchmark")
+    conda: "envs/sourmash3.4.yml"
+    shell:
+        """
+        sourmash lca index \
+          --ksize {params.ksize} \
+          --scaled {wildcards.scaled} \
+          --split-identifiers \
+          --require-taxonomy \
+          --traverse-directory \
+          --report {params.report} \
+          {params.alpha_cmd} {input.taxonomy} {output} \
+          {params.sigdir} 2> {log}
+        """
+        #touch  {output.report}
+        #{compute_dir}/{params.input_type}/{wildcards.alphabet}/k{wildcards.k}/*_{params.alpha}_scaled{wildcards.scaled}_k{wildcards.k}.sig  2> {log}
 
 
-#rule lca_to_sbt:
-#    input: os.path.join(index_dir, "lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json.gz")
-#    output: os.path.join(index_dir, "sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip")
-#    log: os.path.join(logs_dir, "lca-to-sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.lca-to-sbt.log")
-#    benchmark: os.path.join(logs_dir, "lca-to-sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.lca-to-sbt.benchmark")
-#    resources:
-#        mem_mb= lambda wildcards, attempt: attempt *100000,
-#        runtime=600,
-#    conda: "envs/sourmash-dev.yml"
-#    shell:
-#        """
-#        python scripts/convert-lca-to-sbt.py {input} {output} 2> {log}
-#        """
+rule lca_to_sbt:
+    input: os.path.join(index_dir, "lca", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.lca.json.gz")
+    output: os.path.join(index_dir, "sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.index.sbt.zip")
+    log: os.path.join(logs_dir, "lca-to-sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.lca-to-sbt.log")
+    benchmark: os.path.join(logs_dir, "lca-to-sbt", "{sample}.{alphabet}_scaled{scaled}_k{k}.lca-to-sbt.benchmark")
+    resources:
+        mem_mb= lambda wildcards, attempt: attempt *100000,
+        runtime=600,
+    conda: "envs/sourmash-dev.yml"
+    shell:
+        """
+        python scripts/convert-lca-to-sbt.py {input} {output} 2> {log}
+        """

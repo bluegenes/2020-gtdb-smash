@@ -81,9 +81,10 @@ rule gather_sig:
     resources:
         mem_mb=lambda wildcards, attempt: attempt *10000,
         runtime=200,
-    log: os.path.join(logs_dir, "gather", "{alphabet}-k{ksize}",  "{genome}_x_{db_name}.{alphabet}-k{ksize}.gather.log")
-    benchmark: os.path.join(logs_dir, "gather", "{alphabet}-k{ksize}", "{genome}_x_{db_name}.{alphabet}-k{ksize}.gather.benchmark")
+    log: os.path.join(logs_dir, "gather", input_type, "{alphabet}-k{ksize}",  "{genome}_x_{db_name}.{alphabet}-k{ksize}.gather.log")
+    benchmark: os.path.join(logs_dir, "gather", input_type,  "{alphabet}-k{ksize}", "{genome}_x_{db_name}.{alphabet}-k{ksize}.gather.benchmark")
     conda: "envs/sourmash-dev.yml"
+    group: "gather"
     shell:
         # --ignore-abundance to turn abund off
         """
@@ -98,17 +99,19 @@ rule gather_sig:
 
 rule gather_to_tax:
     input:
-        gather_csv = rules.gather_sig.output.csv,
+        #gather_csv = rules.gather_sig.output.csv,
+        gather_csv = os.path.join(gather_dir, "{db_name}.{alphabet}-k{ksize}","{genome}_x_{db_name}.{alphabet}-k{ksize}.gather.csv"),
         #lineages_csv = lambda w: refInfo[w.db_name]["lineages_csv"]
         lineages_csv = lambda w: refInfo[moltype_map[w.alphabet]][w.db_name]["lineages_csv"]
     output:
         gather_tax = os.path.join(gather_dir, "{db_name}.{alphabet}-k{ksize}", "{genome}_x_{db_name}.{alphabet}-k{ksize}.gather_summary.csv"),
         top_matches = os.path.join(gather_dir, "{db_name}.{alphabet}-k{ksize}", "{genome}_x_{db_name}.{alphabet}-k{ksize}.gather_tophits.csv")
-    log: os.path.join(logs_dir, "gather_to_tax", "{db_name}.{alphabet}-k{ksize}", "{genome}_x_{db_name}.{alphabet}-k{ksize}.gather-to-tax.log")
+    log: os.path.join(logs_dir, "gather_to_tax", "{db_name}.{alphabet}-k{ksize}", input_type, "{genome}_x_{db_name}.{alphabet}-k{ksize}.gather-to-tax.log")
     benchmark: os.path.join(logs_dir, "gather_to_tax", "{db_name}.{alphabet}-k{ksize}","{genome}_x_{db_name}.{alphabet}-k{ksize}.gather-to-tax.benchmark")
+    group: "gather"
     resources:
         mem_mb=lambda wildcards, attempt: attempt *10000,
-        runtime=6000,
+        runtime=200,
     conda: "envs/sourmash-dev.yml"
     shell:
         """
@@ -124,7 +127,8 @@ rule aggregate_gather_to_tax:
     output:
         summary_csv=os.path.join(summary_dir, "{sample}_x_{db_name}.{alphabet}-k{ksize}.gather_tophits.csv"),
     params:
-        gather_dir= os.path.join(gather_dir, "{db_name}.{alphabet}-k{ksize}")
+        gather_dir= os.path.join(gather_dir, "{db_name}.{alphabet}-k{ksize}"),
+        true_lineages_cmd = lambda w: "--true-lineages-csv " + sampleInfo[w.sample].get("true_lineages_csv") if sampleInfo[w.sample].get("true_lineages_csv") else "",
     #log: os.path.join(logs_dir, "aggregate_gather", "{sample}_x_{db_name}." + f"{alphabet}-k{ksize}.gather_tophits.log")
     log: os.path.join(logs_dir, "aggregate_gather", "{sample}_x_{db_name}.{alphabet}-k{ksize}.gather_tophits.log")
     benchmark: os.path.join(logs_dir, "aggregate_gather", "{sample}_x_{db_name}.{alphabet}-k{ksize}.gather_tophits.benchmark")
@@ -133,8 +137,9 @@ rule aggregate_gather_to_tax:
         runtime=60,
     conda: "envs/forage-env.yml"
     shell:
+        #python scripts/aggregate-gather-to-tax-tophits.py --input-is-directory --output-csv {output} {params.gather_dir} --true-lineages-csv {input.true_lineages} 2> {log}
         """
-        python scripts/aggregate-gather-to-tax-tophits.py --input-is-directory --output-csv {output} {params.gather_dir} 2> {log}
+        python scripts/aggregate-gather-to-tax-tophits.py --input-is-directory --output-csv {output} {params.gather_dir} {params.true_lineages_cmd} 2> {log}
         """
 
 

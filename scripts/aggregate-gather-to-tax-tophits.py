@@ -100,7 +100,7 @@ def main(args):
 
 
         # print result
-        matches_pivot.to_csv(args.output_match_info, index=False)
+        matches_pivot.to_csv(args.output_match_info, index=True)
 
         outDF = gatherMelt
     else:

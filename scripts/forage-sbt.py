@@ -115,6 +115,34 @@ def assess_group_distance(groupD, acc2sig, compare_csv=None, compare_plot=None, 
 
     return speciesDist
 
+def get_anchor_containment(acclist, siglist):
+    # return accession, anchor containment as list of tuples
+    contain_tuples = []
+    anchor_sig = siglist[0]
+    for acc, sig in zip (acclist, siglist):
+        containment = anchor_sig.contained_by(sig)
+        contain_tuples.append((acc, containment))
+    return contain_tuples
+
+
+
+def assess_anchor_containment(groupD, acc2sig, abund=False): # provide options for choosing to use abund or not? (compute either one OR both, as is done now)
+    anchorContainment = {}
+    for group, accInfo in groupD.items():
+        #siglist = [acc2sig[acc] for acc in acclist] # get signatures
+        # orr, take the time or order sigs properly in siglist:
+        steps_to_common_ancestor = {"species": 0, "genus": 1, "family": 2, "order": 3, "class": 4, "phylum": 5, "superkingdom": 6}
+        siglist = [""]*7
+        acclist = [""]*7
+        for rank, acc in accInfo.items():
+            idx = steps_to_common_ancestor[rank]
+            siglist[idx] = acc2sig[acc]
+            acclist[idx] = acc
+        # get containment
+        anchorContainment[group] = get_anchor_containment(acclist,siglist)
+
+    return anchorContainment
+
 
 def plot_all_distances(speciesDist, dist_csv, dist_plot=None):
     # given all the distances generated from each path, boxplot the distances!

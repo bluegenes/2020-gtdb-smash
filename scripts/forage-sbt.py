@@ -70,18 +70,19 @@ def forage_by_name(sbt, query_signames, threshold=0.1):
 #    return name2leaf
 
 
-def sourmash_compare_and_plot(siglist, ignore_abundance=False, plot_and_save=False, filename=None):
+def sourmash_compare_and_plot(siglist, ignore_abundance=False, compare_csv=None, compare_plot=None):
     dist_matrix = sourmash.compare.compare_all_pairs(siglist, ignore_abundance=ignore_abundance)
     labels = [item.name() for item in siglist]
     #optionally plot with sourmash plot
-    if plot_and_save:
+    if compare_csv:
+        pd.DataFrame(dist_matrix).to_csv(compare_csv, header=labels, index=labels)
+    if compare_plot:
         dist_fig = sourmash.fig.plot_composite_matrix(dist_matrix, labels)
-        if filename:
-            plt.savefig(filename) #, format="svg")
+        plt.savefig(compare_plot) #, format="svg")
     return dist_matrix, labels
 
 
-def assess_group_distance(groupD, acc2sig, abund=False): # provide options for choosing to use abund or not? (compute either one OR both, as is done now)
+def assess_group_distance(groupD, acc2sig, compare_csv=None, compare_plot=None, abund=False): # provide options for choosing to use abund or not? (compute either one OR both, as is done now)
     speciesDist = {}
     for group, accInfo in groupD.items():
         #siglist = [acc2sig[acc] for acc in acclist] # get signatures
@@ -93,9 +94,12 @@ def assess_group_distance(groupD, acc2sig, abund=False): # provide options for c
             idx = steps_to_common_ancestor[rank]
             siglist[idx] = acc2sig[acc]
             acclist[idx] = acc
-        jaccard_dist, labels=sourmash_compare_and_plot(siglist, ignore_abundance=True) #, filename= f"{group}_jaccard.svg") # need ksize, scaled, etc. can we pass in a base name, then add group name?
+        jaccard_dist, labels=sourmash_compare_and_plot(siglist, ignore_abundance=rue, compare_csv=compare_csv, compare_plot=compare_plot) #, filename= f"{group}_jaccard.svg") # need ksize, scaled, etc. can we pass in a base name, then add group name?
         if abund:
-            cosine_dist, labels=sourmash_compare_and_plot(siglist, ignore_abundance=False)  #, filename= f"{group}_cosine.svg")
+            cosine_dist, labels=sourmash_compare_and_plot(siglist, ignore_abundance=False, compare_csv=compare_csv, compare_plot=compare_plot)  #, filename= f"{group}_cosine.svg")
+        #if compare_csv:
+            # write
+
         # build distance:: steps_to_common_ancestor!
         # all we care about is the distance from species-level? so every pairwise with that genome.
         # find the accession that is the species entry
@@ -170,7 +174,7 @@ def main(args):
     # find signatures in sbt
     signame2sig = forage_by_name(sbt, signames_to_find)#, args.threshold)
     # assess and plot distances
-    dist_from_species_level = assess_group_distance(group2signame, signame2sig)
+    dist_from_species_level = assess_group_distance(group2signame, signame2sig, args.full_compare_csv, args.full_compare_plot)
     #plot_all_distances(dist_from_species_level, args.distance_from_species_csv, args.distance_from_species_plot)
     plot_all_distances(dist_from_species_level, args.distance_from_species_csv, args.distance_from_species_plot)
 
@@ -181,6 +185,8 @@ if __name__ == "__main__":
     p.add_argument("--signature-name-column", default="filename", help="column with signature names in the sbt. By default, this should be the fasta file basename")
     #p.add_argument("--threshold", type=int, default=0.1)
     p.add_argument("--distance-from-species-csv", default="path_species_jaccard_dists.csv")
-    p.add_argument("--distance-from-species-plot", default="testpaths.boxplot.svg")
+    p.add_argument("--distance-from-species-plot", default="path_species.boxplot.svg")
+    p.add_argument("--full-compare-csv")
+    p.add_argument("--full-compare-plot")
     args = p.parse_args()
     sys.exit(main(args))

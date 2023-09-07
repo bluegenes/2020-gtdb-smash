@@ -1,0 +1,37 @@
+# cluster_config.yml - cluster configuration
+__default__:
+    account: ctbrowngrp
+    partition: low2
+    #mail-type: FAIL,TIME_LIMIT
+    #mail-user: ntpierce@ucdavis.edu
+    nodes: 1
+    ntasks-per-node: 1
+    job-name: "{rule}.w{wildcards}"
+    chdir: "/home/ntpierce/2020-gtdb-smash"
+    #logdir: "/home/ntpierce/2020-gtdb-smash/tara_delmont/slurm_logs"
+    error: "tara_delmont/slurm_logs/slurm-%j.stderr"
+    output: "tara_delmont/slurm_logs/slurm-%j.stdout"
+
+#index_lca:
+#    partition: bmh
+lca_classify_sigs:
+    account: ctbrowngrp
+    partition: bmm
+    mail-type: FAIL,TIME_LIMIT
+    #mail-user: ntpierce@ucdavis.edu
+    nodes: 1
+    ntasks-per-node: 1
+    job-name: "{rule}.w{wildcards}"
+    chdir: "/home/ntpierce/2020-gtdb-smash"
+    logdir: "/home/ntpierce/2020-gtdb-smash/tara_delmont/slurm_logs"
+lca_summarize_sigs:
+    account: ctbrowngrp
+    partition: bmm
+    mail-type: FAIL,TIME_LIMIT
+    #mail-user: ntpierce@ucdavis.edu
+    nodes: 1
+    ntasks-per-node: 1
+    job-name: "{rule}.w{wildcards}"
+    chdir: "/home/ntpierce/2020-gtdb-smash"
+    logdir: "/home/ntpierce/2020-gtdb-smash/tara_delmont/slurm_logs"
+

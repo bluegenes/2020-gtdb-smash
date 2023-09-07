@@ -1,0 +1,39 @@
+
+
+out_dir: tara_delmont/gtdb-classify
+sample_basename: tara-delmont
+genome_info: tara_delmont/tara-delmont-all-list.txt
+sigs_dir: /home/ntpierce/2020-gtdb-smash/tara_delmont/sigs/
+
+#ksize: 31
+ksize: 21
+#ksize: 51
+alphabet: nucleotide
+input_type: nucleotide
+scaled: 1000
+
+# location of database
+sbt_db:
+#  gtdb-r89.nucl-k31: 
+#    #lineages_csv: /home/ntpierce/2020-gtdb-smash/index-gtdb/gtdb-release89-lineages.csv
+#    lineages_csv: gtdb-lineages.rna-filenames.with-signames.csv
+#    sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb-release89-k31.sbt.zip
+  gtdb-r89.nucl-k21: 
+    lineages_csv: gtdb-lineages.rna-filenames.with-signames.csv
+    sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb-release89-k21.sbt.zip
+  #gtdb-r89.nucl-k51: 
+  #  lineages_csv: gtdb-lineages.rna-filenames.with-signames.csv
+  #  sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb-release89-k51.sbt.zip
+
+lca_db:
+#  gtdb-r89.nucl-k31:
+#    #lineages_csv: /home/ntpierce/2020-gtdb-smash/index-gtdb/gtdb-release89-lineages.csv
+#    lineages_csv: gtdb-lineages.rna-filenames.with-signames.csv
+#    lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb-release89-k31.lca.json.gz
+  gtdb-r89.nucl-k21: 
+    lineages_csv: gtdb-lineages.rna-filenames.with-signames.csv
+    lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb-release89-k21.lca.json.gz
+  #gtdb-r89.nucl-k51: 
+  #  lineages_csv: gtdb-lineages.rna-filenames.with-signames.csv
+  #  lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb-release89-k51.lca.json.gz
+

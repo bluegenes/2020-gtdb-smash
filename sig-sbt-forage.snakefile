@@ -66,7 +66,7 @@ rule sourmash_compute_dna:
         track_abundance=True,
     threads: 1
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *3000,
+        mem_mb=lambda wildcards, attempt: attempt *1000,
         runtime=1200,
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.dna.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.dna.compute.benchmark")
@@ -84,7 +84,7 @@ rule sourmash_compute_protein:
         track_abundance=True,
     threads: 1
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *3000,
+        mem_mb=lambda wildcards, attempt: attempt *1000,
         runtime=1200,
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.protein.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.protein.compute.benchmark")
@@ -102,7 +102,7 @@ rule sourmash_compute_rna:
         track_abundance=True,
     threads: 1
     resources:
-        mem_mb=lambda wildcards, attempt: attempt *3000,
+        mem_mb=lambda wildcards, attempt: attempt *1000,
         runtime=1200,
     log: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.rna.compute.log")
     benchmark: os.path.join(logs_dir, "sourmash", "{accession}_{alphabet}_scaled{scaled}_k{k}.rna.compute.benchmark")

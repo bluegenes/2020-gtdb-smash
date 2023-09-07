@@ -1,0 +1,103 @@
+
+
+out_dir: gtdb-indices
+sigs_dir: gtdb-sigs
+
+gather_samples:
+  gtdb_test_family:
+    input_type: protein
+    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n1th-representative-at-family.csv
+    # almost. would short names for db's help?
+    databases:
+      protein:
+        k7:
+          scaled100: 
+            lca: 
+              - /home/ntpierce/2020-gtdb-smash/gtdb-databases/lca/gtdb_pep.rep_order.protein_scaled100_k7.index.lca.json
+            sbt: ""
+        k9:
+          scaled100: 
+            lca: 
+              - /home/ntpierce/2020-gtdb-smash/gtdb-databases/lca/gtdb_pep.rep_order.protein_scaled100_k9.index.lca.json
+            sbt: ""
+        k11:
+          scaled100: 
+            lca: 
+              - /home/ntpierce/2020-gtdb-smash/gtdb-databases/lca/gtdb_pep.rep_order.protein_scaled100_k11.index.lca.json
+            sbt:
+        k13:
+          scaled100: 
+            lca: 
+              - /home/ntpierce/2020-gtdb-smash/gtdb-databases/lca/gtdb_pep.rep_order.protein_scaled100_k13.index.lca.json
+            sbt:
+      dayhoff:
+        k17:
+          scaled100:
+            lca:
+            sbt:
+        k19:
+          scaled100:
+            lca:
+            sbt:
+        k21:
+          scaled100:
+            lca:
+            sbt:
+        k23:
+          scaled100:
+            lca:
+            sbt:
+        k25:
+          scaled100:
+            lca:
+            sbt:
+      hp:
+        k31:
+          scaled100:
+            lca:
+            sbt:
+        k33:
+          scaled100:
+            lca:
+            sbt:
+        k35:
+          scaled100:
+            lca:
+            sbt:
+
+
+  gtdb_pep.rep_order:
+    input_type: protein
+    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n1th-representative-at-order.csv
+    index_outdir: "gtdb-sbts/sbts"
+    index_types:
+        - lca
+    alphabet:
+      protein:
+        ksizes: [7,9,11] 
+        scaled: [100]
+      dayhoff:
+        ksizes: [17,19,21,23,25] 
+        scaled: [100]
+      hp:
+        ksizes: [31,33,35]
+        scaled: [100]
+#  gtdb_pep.rep_genus:
+#    input_type: protein
+#    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+#    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n1th-representative-at-genus.csv
+#    index_outdir: "gtdb-sbts/sbts"
+#    index_types:
+#        - lca
+#    alphabet:
+#      protein:
+#        ksizes: [7,9,11]
+#        scaled: [100]
+#      dayhoff:
+#        ksizes: [17,19,21,23,25]
+#        scaled: [100]
+#      hp:
+#        ksizes: [31,33,35]
+#        scaled: [100]

@@ -1,0 +1,24 @@
+
+
+out_dir: index-gtdb
+sigs_dir: index-gtdb/sigs
+
+representative_indices:
+  gtdb_pep:
+    input_type: protein
+    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.with-signames.csv
+    index_outdir: "index-gtdb"
+    index_types:
+        - lca
+        #- sbt
+    alphabet:
+      #protein:
+      #  ksizes: [11] #[7,9,11] #[5,7,9,11] #[5,7,9,11]
+      #  scaled: [100]
+      #dayhoff:
+      #  ksizes:  [19] #[17,19,21] #,19] #[15,17,19] #[17,19,21,23,25]
+      #  scaled: [100]
+      hp:
+        ksizes: [35] #[31,33,35]
+        scaled: [100]

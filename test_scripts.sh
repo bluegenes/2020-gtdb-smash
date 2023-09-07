@@ -83,10 +83,13 @@
 
 ## Set up dna genus-n1th
 
-python scripts/match-accession-to-filename.py gtdb-lineages.csv --sigfile-directory  /home/ctbrown/gtdbtk/release89/fastani/database --output-csv gtdb-lineages.dna-filenames.csv
-python scripts/select-representative-lineages.py gtdb-lineages.dna-filenames.csv --representative-rank genus --nth-to-select 0
-python scripts/select-representative-lineages.py gtdb-lineages.dna-filenames.csv --representative-rank genus --nth-to-select 1
-python scripts/select-representative-lineages.py gtdb-lineages.dna-filenames.csv --representative-rank genus --keep-all
+#python scripts/match-accession-to-filename.py gtdb-lineages.csv --sigfile-directory  /home/ctbrown/gtdbtk/release89/fastani/database --output-csv gtdb-lineages.dna-filenames.csv
+#python scripts/select-representative-lineages.py gtdb-lineages.dna-filenames.csv --representative-rank genus --nth-to-select 0
+#python scripts/select-representative-lineages.py gtdb-lineages.dna-filenames.csv --representative-rank genus --nth-to-select 1
+#python scripts/select-representative-lineages.py gtdb-lineages.dna-filenames.csv --representative-rank genus --keep-all
+
+#python scripts/select-representative-lineages.py gtdb_evol_groups.with_rna_filenames.csv  --representative-rank genus --keep-all --output-csv gtdb_evol_groups.with_rna_filenames.test.csv
+python scripts/select-representative-lineages.py gtdb_evol_groups.correct-lineages.with_filenames.csv  --representative-rank genus --keep-all --output-csv gtdb_evol_groups.with_filenames.with-signames.csv
 
 
 

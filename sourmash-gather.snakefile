@@ -67,9 +67,9 @@ rule all:
 rule gather_sig:
     input:
         # TARA_IOS_MAG_00042.fa.faa.sig or # TARA_ANE_MAG_00001_protein_scaled100_k11.sig
-        query= lambda w: os.path.join(sigs_dir, input_type, "{alphabet}", "k{ksize}", "{genome}_{alphabet}_scaled100_k{ksize}.sig"), 
+        query= lambda w: os.path.join(sigs_dir, input_type, "{alphabet}", "k{ksize}", "{genome}_{alphabet}_scaled1000_k{ksize}.sig"), 
         #query= os.path.join(sigs_dir, "{genome}.faa.sig")
-        db= lambda w: refInfo[moltype_map[w.alphabet]][w.db_name][f"k{w.ksize}"]["sbt"]
+        db= lambda w: refInfo[w.alphabet][w.db_name][f"k{w.ksize}"]["sbt"]
     output:
         csv = os.path.join(gather_dir, "{db_name}.{alphabet}-k{ksize}","{genome}_x_{db_name}.{alphabet}-k{ksize}.gather.csv"),
         matches = os.path.join(gather_dir, "{db_name}.{alphabet}-k{ksize}","{genome}_x_{db_name}.{alphabet}-k{ksize}.gather.matches"),
@@ -102,7 +102,8 @@ rule gather_to_tax:
         #gather_csv = rules.gather_sig.output.csv,
         gather_csv = os.path.join(gather_dir, "{db_name}.{alphabet}-k{ksize}","{genome}_x_{db_name}.{alphabet}-k{ksize}.gather.csv"),
         #lineages_csv = lambda w: refInfo[w.db_name]["lineages_csv"]
-        lineages_csv = lambda w: refInfo[moltype_map[w.alphabet]][w.db_name]["lineages_csv"]
+        lineages_csv = lambda w: refInfo[w.alphabet][w.db_name]["lineages_csv"]
+        #lineages_csv="/home/ntpierce/2020-gtdb-smash/gtdb-lineages.rna-filenames.n0th-representative-at-genus.csv"
     output:
         gather_tax = os.path.join(gather_dir, "{db_name}.{alphabet}-k{ksize}", "{genome}_x_{db_name}.{alphabet}-k{ksize}.gather_summary.csv"),
         top_matches = os.path.join(gather_dir, "{db_name}.{alphabet}-k{ksize}", "{genome}_x_{db_name}.{alphabet}-k{ksize}.gather_tophits.csv")

@@ -57,15 +57,21 @@
 #snakemake -s compute-sigs.snakefile --configfile tara_delmont/compute-protein-sigs.yml --profile farm --cluster-config tara_delmont/cluster_config.yml --jobs 40
 #snakemake -s compute-sigs.snakefile --configfile tara_delmont/compute-nucleotide-sigs.yml --profile farm --cluster-config tara_delmont/cluster_config.yml --jobs 40
 
-for i in $(seq 1 1000)
-  do 
-   snakemake -s sourmash-compute.snakefile --configfile config/compute_gtdb.yml --profile farm --cluster-config cluster_config.yml --batch all=$i/1000 --jobs 32 
-  done
+#for i in $(seq 1 1000)
+#  do 
+#snakemake -s sourmash-compute.snakefile --configfile config/compute_gtdb.yml --profile farm --cluster-config cluster_config.yml --jobs 5 #--batch all=$i/1000 --jobs 32 
+#  done
 
   #--nolock -n  # --restart-times 0 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
-#snakemake -s sourmash-compute.snakefile --configfile config/compute_gtdb.yml --profile farm --cluster-config config/grow-sbt-clusterconfig.yml --jobs 40 #--nolock -n  # --restart-times 0 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
+#snakemake -s sourmash-compute.snakefile --configfile config/compute_gtdb.yml --profile farm --cluster-config cluster_config.yml --jobs 40 #--nolock -n  # --restart-times 0 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
 
-#snakemake -s sourmash-gather.snakefile --configfile config/gather_classify_gtdb_rna.yml --profile farm --cluster-config cluster_config.yml  --jobs 30 #--nolock -n  # --restart-times 0 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
+snakemake -s sourmash-gather.snakefile --configfile config/gather_classify_gtdb_rna.yml --profile farm --cluster-config cluster_config.yml  --jobs 50  #--nolock  # --restart-times 0 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
+#snakemake -s sourmash-gather.snakefile --configfile config/gather_classify_gtdb_rna.yml --profile default  --jobs 1   # --restart-times 0 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
 
 #snakemake -s sig-sbt-forage.snakefile --configfile config/grow_gtdb_sbts.yml --profile default --jobs 1
+
+
+
+#snakemake -s sourmash-gather.snakefile --configfile config/gather_classify_gtdb_dna.yml --profile farm --cluster-config cluster_config.yml  --jobs 30  # --restart-times 0 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
+#snakemake -s sourmash-gather.snakefile --configfile config/gather_classify_gtdb_dna.yml --profile default  --jobs 30  # --restart-times 0 #40 #--resources mem_mb=340000 # -n #--nolock --restart-times 0 -n
 

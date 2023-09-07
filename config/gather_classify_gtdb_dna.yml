@@ -1,0 +1,102 @@
+
+
+sigs_dir: /home/ntpierce/2020-gtdb-smash/tmp_sigs/  #index-gtdb/sigs/
+out_dir: index-gtdb/classify
+input_type: dna
+gather_scaled: 1000
+
+# list of samples, ksizes, scaled vals to run
+samples:
+  gtdb_rna.genus-n1th:
+    gather_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.dna-filenames.n1th-representative-at-genus.csv
+    true_lineages_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.dna-filenames.n1th-representative-at-genus.csv
+    alphabet: 
+ #     nucleotide:
+ #       ksizes: [21,31,51]    
+ #       scaled: [1000] # 1000 slowwww 
+      translate_protein:
+        ksizes: [11]
+        scaled: [100]
+ #     translate_dayhoff:
+ #       ksizes: [19]
+ #       scaled: [100]
+ #     translate_hp:
+ #       ksizes: [35]
+ #       scaled: [100] 
+  #gtdb_dna.genus-n1th:
+  #  input_type: dna
+  #  genome_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.dna-filenames.n1th-representative-at-genus.csv
+  #  alphabet: 
+  #    nucleotide:
+  #      ksizes: [21,31,51]    
+  #      scaled: [10000] # 1000 taking too long
+  #    translate_protein:
+  #      ksizes: [11] #[5,6,7,9,11,13] #5,7
+  #      scaled: [100] #[50, 200, 1000]
+  #    translate_dayhoff:
+  #      ksizes: [19] #[5,6,7,8,9,11,12,13,15,17] #11,13
+  #      scaled: [100] #[50, 200, 1000]
+      #translate_hp:
+      #  ksizes: [35] #[15,16,17,18,19,21,23,25] #[15,17,19,21]
+      #  scaled: [50, 200, 1000] # 1 is taking forever
+
+
+# list of all available references
+references:
+  nucleotide:
+    gtdb_rna.rep_genus:
+      lineages_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.rna-filenames.n0th-representative-at-genus.csv
+      k21:
+        lca: index-gtdb/lca/gtdb_rna.rep_genus.nucleotide_scaled1000_k21.index.lca.json.gz
+        sbt: index-gtdb/sbt/gtdb_rna.rep_genus.nucleotide_scaled1000_k21.index.sbt.zip
+      k31:
+        lca: index-gtdb/lca/gtdb_rna.rep_genus.nucleotide_scaled1000_k21.index.lca.json.gz
+        sbt: index-gtdb/sbt/gtdb_rna.rep_genus.nucleotide_scaled1000_k21.index.sbt.zip
+      k51:
+        lca: index-gtdb/lca/gtdb_rna.rep_genus.nucleotide_scaled1000_k21.index.lca.json.gz
+        sbt: index-gtdb/sbt/gtdb_rna.rep_genus.nucleotide_scaled1000_k21.index.sbt.zip
+    gtdb-r89:
+      lineages_csv: gtdb-lineages.rna-filenames.with-signames.csv
+      k21:
+        sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb-release89-k21.sbt.zip
+        lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb-release89-k21.lca.json.gz
+      k31:
+        sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb-release89-k31.sbt.zip
+        lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb-release89-k31.lca.json.gz
+      k51:
+        sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb-release89-k51.sbt.zip
+        lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb-release89-k51.lca.json.gz
+  protein:
+    gtdb_pep.rep_genus:
+      lineages_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-genus.csv
+      k11:
+        sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb_pep.rep_genus.protein_scaled100_k11.sbt.zip
+        lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb_pep.rep_genus.protein_scaled100_k11.index.lca.json.gz
+    #gtdb-r89:
+    #  lineages_csv: gtdb-lineages.protein-filenames.with-signames.csv
+    #  k11:
+    #    sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb_pep.protein_scaled100_k11.index.sbt.zip
+    #    lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb_pep.protein_scaled100_k11.index.lca.json.gz
+  dayhoff:
+    gtdb_pep.rep_genus:
+      lineages_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-genus.csv
+      k19:
+        sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb_pep.rep_genus.dayhoff_scaled100_k19.sbt.zip
+        lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb_pep.rep_genus.dayhoff_scaled100_k19.index.lca.json.gz
+    gtdb-r89:
+      lineages_csv: gtdb-lineages.protein-filenames.with-signames.csv
+      k19:
+        sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb_pep.dayhoff_scaled100_k19.index.sbt.zip
+        lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb_pep.dayhoff_scaled100_k19.index.lca.json.gz
+  hp:
+    gtdb_pep.rep_genus:
+      lineages_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-genus.csv
+      k35:
+        sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb_pep.rep_genus.hp_scaled100_k35.sbt.zip
+        lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb_pep.rep_genus.hp_scaled100_k35.index.lca.json.gz
+    gtdb-r89:
+      lineages_csv: gtdb-lineages.protein-filenames.with-signames.csv
+      k35:
+        sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb_pep.hp_scaled100_k35.index.sbt.zip
+        lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb_pep.hp_scaled100_k35.index.lca.json.gz
+

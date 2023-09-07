@@ -57,13 +57,13 @@ foraging_samples:
         scaled: [50,200,1000,2000]
       translate_protein:
         ksizes: [5,6,7,9,11,13] #5,7
-        scaled: [1, 50, 200, 1000] # 1
+        scaled: [50, 200, 1000] # 1
       translate_dayhoff:
         ksizes: [5,6,7,8,9,11,12,13,15,17] #11,13
-        scaled: [1, 50, 200, 1000] #1
+        scaled: [50, 200, 1000] #1
       translate_hp:
         ksizes: [15,16,17,18,19,21,23,25] #[15,17,19,21]
-        scaled: [1, 50, 200, 1000]
+        scaled: [50, 200, 1000]
   evol_paths_first_seven_dna:
     query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups_first_seven.with_dna_filenames.csv
     use_existing_sbt: ""  # alternatively: use a prebuilt sbt, don't generate new one 
@@ -77,13 +77,13 @@ foraging_samples:
         scaled: [50,200,1000,2000]
       translate_protein:
         ksizes: [5,6,7,9,11,13] #5,7
-        scaled: [1, 50, 200, 1000]
+        scaled: [50, 200, 1000]
       translate_dayhoff:
         ksizes: [5,6,7,8,9,11,12,13,15,17] #11,13
-        scaled: [1, 50, 200, 1000]
+        scaled: [50, 200, 1000]
       translate_hp:
         ksizes: [15,16,17,18,19,21,23,25] #[15,17,19,21]
-        scaled: [1, 50, 200, 1000] # 1 is taking forever
+        scaled: [50, 200, 1000] # 1 is taking forever
 # grow full sbt:
 #gtdb_r89_faa:
   #sbt:

@@ -1,0 +1,57 @@
+
+
+#out_dir: gtdb-indices
+out_dir: index-gtdb
+sigs_dir: index-gtdb/sigs
+index_dir: index-gtdb
+
+samples:
+  #gtdb_rna:
+    #input_type: rna
+    #input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_rna_fna
+    #info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.rna-filenames.with-signames.csv
+    #alphabet:
+     # nucleotide:
+     #   ksizes: [21,31,51] 
+     #   scaled: [1000]
+      #translate_protein:
+      #  ksizes: [11] 
+      #  scaled: [100]
+      #translate_dayhoff:
+      #  ksizes: [19]
+      #  scaled: [100]
+     # translate_hp:
+     #   ksizes: [35]
+     #   scaled: [100]
+  gtdb_dna:
+    input_type: dna
+    input_path: /home/ctbrown/gtdbtk/release89/fastani/database 
+    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.dna-filenames.n1th-representative-at-genus.csv
+    #info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.dna-filenames.with-signames.csv 
+    alphabet:
+      #nucleotide:
+      #  ksizes: [21,31,51] 
+      #  scaled: [1000]
+      translate_protein:
+        ksizes: [11] 
+        scaled: [100]
+      #translate_dayhoff:
+      #  ksizes: [19]
+      #  scaled: [100]
+      #translate_hp:
+      #  ksizes: [35]
+      #  scaled: [100]
+#  gtdb_pep:
+#    input_type: protein
+#    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
+#    info_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.with-signames.csv
+#    alphabet:
+#      protein:
+#        ksizes: [11] #[7,9,11]
+#        scaled: [100]
+#     dayhoff:
+#        ksizes: [19] #[17,19,21,23,25]
+#        scaled: [100]
+#      hp:
+#        ksizes: [35] #[31,33,35]
+#        scaled: [100]

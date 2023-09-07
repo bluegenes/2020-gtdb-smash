@@ -44,11 +44,6 @@ if config.get("rna_sigs", False):
     nucleotide_encodings+=["rna"]
 
 
-def build_filename(folder, sample, encoding, scaled, ksize):
-    pass
-
-
-
 for enc in nucleotide_encodings:
     nucleotide_targets += expand(os.path.join(compute_dir, "{encoding}", "{sample}_{encoding}_scaled{scaled}_k{k}.{ext}"), sample = genome_lineages, encoding=enc, scaled=encoding_info[enc]["scaled"], k=encoding_info[enc]["ksize"], ext=output_extensions)
     nucleotide_targets += expand(os.path.join(plots_dir, f"{enc}", "{path}_{encoding}_scaled{scaled}_k{k}_compare.np.matrix.pdf"), encoding=enc, scaled=encoding_info[enc]["scaled"], k=encoding_info[enc]["ksize"], path = path2acc.keys())

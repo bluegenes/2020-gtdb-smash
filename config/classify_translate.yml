@@ -1,0 +1,27 @@
+
+
+out_dir: index_gtdb/classify
+sample_basename: 
+genome_csv:
+sigs_dir: /home/ntpierce/2020-gtdb-smash/index_gtdb/sigs
+ksize: 11
+alphabet: protein
+input_type: translate_protein
+scaled: 100
+
+
+# taxonomic info for genomes in the database
+#database_lineages_csv: gtdb-lineages.protein-filenames.with-signames.csv
+
+# location of database
+sbt_db:
+  gtdb-genus.protein-k11: 
+    #- lineages_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.with-signames.csv
+    lineages_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-genus.csv
+    sbt: /home/ntpierce/2020-gtdb-smash/index-gtdb/sbt/gtdb_pep.rep_genus.protein_scaled100_k11.sbt.zip
+
+lca_db:
+  gtdb-genus.protein-k11:
+    lineages_csv: /home/ntpierce/2020-gtdb-smash/gtdb-lineages.protein-filenames.n0th-representative-at-genus.csv
+    lca: /home/ntpierce/2020-gtdb-smash/index-gtdb/lca/gtdb_pep.rep_genus.protein_scaled100_k11.index.lca.json.gz
+

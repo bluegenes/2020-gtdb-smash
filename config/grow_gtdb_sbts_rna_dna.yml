@@ -16,47 +16,27 @@ foraging_samples:
         #subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
 #      alphabet:
 #        protein:
-#          ksizes: [5] #[7,9,11,13] #[5,7,9,11,13] #[7,9] #[5,7,9,11,13]
-#          scaled: [10] # [200]
+#          ksizes: [5,7,9,11,13]
+#          scaled: [200] # [50]
 #        dayhoff:
-#          ksizes: [11,13,15] #[17,19,21,23,25,27] #,21] #[19,21,23,25,27] #[13,15,17,19,21,23,25]  #[19, 21, 23] #[13,15,19,17,21,23,25] #19
-#          scaled: [10] #[200]
+#          ksizes: [19] #[13,15,17,21,23,25] #19
+#          scaled: [200] #[50]
 #        hp:
-#          ksizes: [23, 41] #[25,27,29,31,33] #27,29,31,33] #[23,25,27,29,31,33] #[25, 27] #[23,25,27,29,31,33]
-#          scaled: [10] #[200]
-  evol_paths_pep_first_seven_test:
-      input_type: protein
-      query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.with_filenames.first-seven.csv
-      grow_sbt:
-        input_path: /home/ntpierce/2020-gtdb-smash/gtdb_faa_pathsonly
-        subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.with_filenames.first-seven.csv
-        sbt_outdir: "evol_distances/sbts"
-        #input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_faa
-        #query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
-        #subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.tsv
-      alphabet:
-        protein:
-          ksizes: [11] #[7,9,11,13] #[5,7,9,11,13] #[7,9] #[5,7,9,11,13]
-          scaled: [10] # [200]
-        #dayhoff:
-        #  ksizes: [11,13,15] #[17,19,21,23,25,27] #,21] #[19,21,23,25,27] #[13,15,17,19,21,23,25]  #[19, 21, 23] #[13,15,19,17,21,23,25] #19
-        #  scaled: [10] #[200]
-        #hp:
-        #  ksizes: [23, 41] #[25,27,29,31,33] #27,29,31,33] #[23,25,27,29,31,33] #[25, 27] #[23,25,27,29,31,33]
-        #  scaled: [10] #[200]
+#          ksizes: [23,25,27,29,31,33]
+#          scaled: [200] #[50]
   
-  #evol_paths_rna:
-  #  input_type: rna
-  #  query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.with_rna_filenames.csv
+  evol_paths_rna:
+    input_type: rna
+    query_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.with_rna_filenames.csv
     #use_existing_sbt: ""  # alternatively: use a prebuilt sbt, don't generate new one 
-  #  grow_sbt:
-  #    input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_rna_fna 
-  #    subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.with_rna_filenames.csv
-  #    sbt_outdir: "evol_distances/sbts"
-  #  alphabet:
-  #    nucleotide:
-  #      ksizes: [21,31,51]
-  #      scaled: [1000]  #[50,200,1000,2000]
+    grow_sbt:
+      input_path: /home/ntpierce/2020-gtdb-smash/gtdb_r89_rep_genomes_rna_fna 
+      subset_csv: /home/ntpierce/2020-gtdb-smash/gtdb_evol_groups.with_rna_filenames.csv
+      sbt_outdir: "evol_distances/sbts"
+    alphabet:
+      nucleotide:
+        ksizes: [21,31] #51
+        scaled: [1000]  #[50,200,1000,2000]
 #      translate_protein:
 #        ksizes: [5,6,7,9,11,13] #5,7
 #        scaled: [50, 200, 1000] # 1
